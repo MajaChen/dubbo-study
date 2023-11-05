@@ -64,7 +64,7 @@ public class ExtensionDirector implements ExtensionAccessor {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> ExtensionLoader<T> getExtensionLoader(Class<T> type) {
+    public <T> ExtensionLoader<T> getExtensionLoader(Class<T> type) {// 入口方法，获取ExtensionLoader实例
         checkDestroyed();
         if (type == null) {
             throw new IllegalArgumentException("Extension type == null");
@@ -77,7 +77,7 @@ public class ExtensionDirector implements ExtensionAccessor {
                 ") is not an extension, because it is NOT annotated with @" + SPI.class.getSimpleName() + "!");
         }
 
-        // 1. find in local cache
+        // 1. 首先从缓存获取
         ExtensionLoader<T> loader = (ExtensionLoader<T>) extensionLoadersMap.get(type);
 
         ExtensionScope scope = extensionScopeMap.get(type);
@@ -92,14 +92,14 @@ public class ExtensionDirector implements ExtensionAccessor {
             loader = createExtensionLoader0(type);
         }
 
-        // 2. find in parent
+        // 2. 从父ExtensionDirector获取
         if (loader == null) {
             if (this.parent != null) {
                 loader = this.parent.getExtensionLoader(type);
             }
         }
 
-        // 3. create it
+        // 3. 创建之
         if (loader == null) {
             loader = createExtensionLoader(type);
         }
@@ -107,11 +107,11 @@ public class ExtensionDirector implements ExtensionAccessor {
         return loader;
     }
 
-    private <T> ExtensionLoader<T> createExtensionLoader(Class<T> type) {
+    private <T> ExtensionLoader<T> createExtensionLoader(Class<T> type) {// 创建ExtensionLoader
         ExtensionLoader<T> loader = null;
         if (isScopeMatched(type)) {
             // if scope is matched, just create it
-            loader = createExtensionLoader0(type);
+            loader = createExtensionLoader0(type);// 创建逻辑，调用ExtensionLoader构造方法
         }
         return loader;
     }
@@ -120,7 +120,7 @@ public class ExtensionDirector implements ExtensionAccessor {
     private <T> ExtensionLoader<T> createExtensionLoader0(Class<T> type) {
         checkDestroyed();
         ExtensionLoader<T> loader;
-        extensionLoadersMap.putIfAbsent(type, new ExtensionLoader<T>(type, this, scopeModel));
+        extensionLoadersMap.putIfAbsent(type, new ExtensionLoader<T>(type, this, scopeModel));// 调用ExtensionLoader构造方法
         loader = (ExtensionLoader<T>) extensionLoadersMap.get(type);
         return loader;
     }

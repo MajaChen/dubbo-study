@@ -1,0 +1,2 @@
+mysql = org.apache.dubbo.test.common.chxy.spi.MysqlDataBaseSPIImpl
+oracle = org.apache.dubbo.test.common.chxy.spi.OracleDataBaseSPIImpl

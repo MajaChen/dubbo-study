@@ -98,7 +98,7 @@ public class URLParam {
      * <p>
      * e.g. method1.mock=true => ( mock, (method1, true) )
      */
-    private final Map<String, Map<String, String>> METHOD_PARAMETERS;
+    private final Map<String, Map<String, String>> METHOD_PARAMETERS;// 保存方法特定的参数
 
     private transient long timestamp;
 
@@ -194,9 +194,13 @@ public class URLParam {
      * @return value
      */
     public String getMethodParameterStrict(String method, String key) {
+        /*
+        * method是方法名， key是参数名
+        * 如果方法本身有Invocation作为入参，则返回入参特定于该方法所绑定的值（糟糕的代码设计）
+        * */
         String methodsString = getParameter(METHODS_KEY);
         if (StringUtils.isNotEmpty(methodsString)) {
-            if (!methodsString.contains(method)) {
+            if (!methodsString.contains(method)) {// url中有methods="xxx...yyy...zzz"，如果url参数中的methods中不包含给定的方法则返回null
                 return null;
             }
         }

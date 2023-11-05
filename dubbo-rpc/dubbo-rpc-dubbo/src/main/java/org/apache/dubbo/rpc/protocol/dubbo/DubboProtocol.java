@@ -307,11 +307,11 @@ public class DubboProtocol extends AbstractProtocol {
     }
 
     @Override
-    public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
+    public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {// 基于invoker和dubbo协议创建Exporter，本地启动之
         checkDestroyed();
         URL url = invoker.getUrl();
 
-        // export service.
+        // 创建Exporter
         String key = serviceKey(url);
         DubboExporter<T> exporter = new DubboExporter<T>(invoker, key, exporterMap);
 
@@ -329,13 +329,14 @@ public class DubboProtocol extends AbstractProtocol {
             }
         }
 
+        // 本地启动之
         openServer(url);
         optimizeSerialization(url);
 
         return exporter;
     }
 
-    private void openServer(URL url) {
+    private void openServer(URL url) {// 本地启动Exporter
         checkDestroyed();
         // find server.
         String key = url.getAddress();
@@ -365,7 +366,7 @@ public class DubboProtocol extends AbstractProtocol {
         }
     }
 
-    private ProtocolServer createServer(URL url) {
+    private ProtocolServer createServer(URL url) {// 本地启动server之具体逻辑
         url = URLBuilder.from(url)
             // send readonly event when server closes, it's enabled by default
             .addParameterIfAbsent(CHANNEL_READONLYEVENT_SENT_KEY, Boolean.TRUE.toString())

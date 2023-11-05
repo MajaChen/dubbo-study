@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * AdaptiveExtensionInjector
  */
 @Adaptive
-public class AdaptiveExtensionInjector implements ExtensionInjector, Lifecycle {
+public class AdaptiveExtensionInjector implements ExtensionInjector, Lifecycle {// 代理类
 
     private Collection<ExtensionInjector> injectors = Collections.emptyList();
     private ExtensionAccessor extensionAccessor;
@@ -54,10 +54,16 @@ public class AdaptiveExtensionInjector implements ExtensionInjector, Lifecycle {
 
     @Override
     public <T> T getInstance(final Class<T> type, final String name) {
+        /*
+        * 根据依赖的类型和依赖的名称获取依赖对象，会依次遍历全部ExtensionInjector
+        * 目前重点关注：SPI和Spring这两种依赖注入
+        * SPI：还是通过ExtensionLoader加载依赖
+        * Spring：通过Ioc容器加载依赖
+        * */
         return injectors.stream()
             .map(injector -> injector.getInstance(type, name))
             .filter(Objects::nonNull)
-            .findFirst()
+            .findFirst()// 只要有一个返回成功即返回
             .orElse(null);
     }
 

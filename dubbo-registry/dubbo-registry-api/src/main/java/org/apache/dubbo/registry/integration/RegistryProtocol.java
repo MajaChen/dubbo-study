@@ -225,7 +225,7 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
         return map;
     }
 
-    private static void register(Registry registry, URL registeredProviderUrl) {
+    private static void register(Registry registry, URL registeredProviderUrl) {// 注册服务到远程的注册中心
         ApplicationDeployer deployer = registeredProviderUrl.getOrDefaultApplicationModel().getDeployer();
         try {
             deployer.increaseServiceRefreshCount();
@@ -253,7 +253,7 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
     }
 
     @Override
-    public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
+    public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {// 注册服务到远程并生成exporter
         URL registryUrl = getRegistryUrl(originInvoker);
         // url to export locally
         URL providerUrl = getProviderUrl(originInvoker);
@@ -269,7 +269,7 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
             .add(overrideSubscribeListener);
 
         providerUrl = overrideUrlWithConfig(providerUrl, overrideSubscribeListener);
-        //export invoker
+        // 生成exporter，本地启动之
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker, providerUrl);
 
         // url to registry
@@ -278,7 +278,7 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
 
         // decide if we need to delay publish (provider itself and registry should both need to register)
         boolean register = providerUrl.getParameter(REGISTER_KEY, true) && registryUrl.getParameter(REGISTER_KEY, true);
-        if (register) {
+        if (register) {// 注册服务到远程的注册中心
             register(registry, registeredProviderUrl);
         }
 
@@ -325,7 +325,7 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> ExporterChangeableWrapper<T> doLocalExport(final Invoker<T> originInvoker, URL providerUrl) {
+    private <T> ExporterChangeableWrapper<T> doLocalExport(final Invoker<T> originInvoker, URL providerUrl) {// 创建Exporter，本地启动服务
         String providerUrlKey = getProviderUrlKey(originInvoker);
         String registryUrlKey = getRegistryUrlKey(originInvoker);
         Invoker<?> invokerDelegate = new InvokerDelegate<>(originInvoker, providerUrl);

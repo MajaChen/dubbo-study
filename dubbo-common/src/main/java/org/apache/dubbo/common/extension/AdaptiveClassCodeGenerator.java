@@ -99,22 +99,22 @@ public class AdaptiveClassCodeGenerator {
      * generate and return class code
      * @param sort - whether sort methods
      */
-    public String generate(boolean sort) {
+    public String generate(boolean sort) {// 动态拼接自适应扩展的实现代码
         // no need to generate adaptive class since there's no adaptive method found.
         if (!hasAdaptiveMethod()) {
             throw new IllegalStateException("No adaptive method exist on extension " + type.getName() + ", refuse to create the adaptive class!");
         }
 
         StringBuilder code = new StringBuilder();
-        code.append(generatePackageInfo());
-        code.append(generateImports());
-        code.append(generateClassDeclaration());
+        code.append(generatePackageInfo());// 包
+        code.append(generateImports());// 引入
+        code.append(generateClassDeclaration());// 类声明
 
         Method[] methods = type.getMethods();
         if (sort) {
             Arrays.sort(methods, Comparator.comparing(Method::toString));
         }
-        for (Method method : methods) {
+        for (Method method : methods) {// （核心）为原始接口的每个方法生成代理实现
             code.append(generateMethod(method));
         }
         code.append('}');
@@ -174,10 +174,10 @@ public class AdaptiveClassCodeGenerator {
     /**
      * generate method declaration
      */
-    private String generateMethod(Method method) {
+    private String generateMethod(Method method) {// 为原始接口的每个方法生成代理实现
         String methodReturnType = method.getReturnType().getCanonicalName();
         String methodName = method.getName();
-        String methodContent = generateMethodContent(method);
+        String methodContent = generateMethodContent(method);// 生成方法内容
         String methodArgs = generateMethodArguments(method);
         String methodThrows = generateMethodThrows(method);
         return String.format(CODE_METHOD_DECLARATION, methodReturnType, methodName, methodArgs, methodThrows, methodContent);
@@ -216,35 +216,35 @@ public class AdaptiveClassCodeGenerator {
     /**
      * generate method content
      */
-    private String generateMethodContent(Method method) {
+    private String generateMethodContent(Method method) {// 生成方法内容
         Adaptive adaptiveAnnotation = method.getAnnotation(Adaptive.class);
         StringBuilder code = new StringBuilder(512);
         if (adaptiveAnnotation == null) {
-            return generateUnsupported(method);
+            return generateUnsupported(method);// 如果方法上没有标注@Adaptive，则直接抛出异常，表示该方法不可由自适应代理类调用
         } else {
-            int urlTypeIndex = getUrlTypeIndex(method);
+            int urlTypeIndex = getUrlTypeIndex(method);// 寻找URL参数
 
             // found parameter in URL type
             if (urlTypeIndex != -1) {
                 // Null Point check
-                code.append(generateUrlNullCheck(urlTypeIndex));
+                code.append(generateUrlNullCheck(urlTypeIndex));// URL非空判定
             } else {
                 // did not find parameter in URL type
-                code.append(generateUrlAssignmentIndirectly(method));
+                code.append(generateUrlAssignmentIndirectly(method));// 方法参数中没有URL，则遍历所有参数类型，通过getter方法获取URL
             }
 
-            String[] value = getMethodAdaptiveValue(adaptiveAnnotation);
+            String[] value = getMethodAdaptiveValue(adaptiveAnnotation);// 获取@Adaptive注解值，如果@Adaptive没有配置注解值则将转换类名得到注解值
 
-            boolean hasInvocation = hasInvocationArgument(method);
+            boolean hasInvocation = hasInvocationArgument(method);// 对Invocation的特殊处理，判断是否有Invocation类型的参数
 
             code.append(generateInvocationArgumentNullCheck(method));
 
-            code.append(generateExtNameAssignment(value, hasInvocation));
+            code.append(generateExtNameAssignment(value, hasInvocation));// 根据@Adaptive注解值和Invocation形参决定扩展实现类
             // check extName == null?
             code.append(generateExtNameNullCheck(value));
 
             code.append(generateScopeModelAssignment());
-            code.append(generateExtensionAssignment());
+            code.append(generateExtensionAssignment());// 得到了实现类标志符，调用ExtensionLoader.getExtension方法获取扩展
 
             // return statement
             code.append(generateReturnAndInvocation(method));
@@ -264,9 +264,15 @@ public class AdaptiveClassCodeGenerator {
      * generate extName assignment code
      */
     private String generateExtNameAssignment(String[] value, boolean hasInvocation) {
+        /*
+        * 根据@Adaptive注解值和Invocation形参决定扩展实现类
+        * 粗略总结一下规则：
+        * 1. 如果是注解值是protocol，则用url.getProtocol
+        * 2. 如果有Invocation参数，则用url.getMethodParameter
+        * */
         // TODO: refactor it
         String getNameCode = null;
-        for (int i = value.length - 1; i >= 0; --i) {
+        for (int i = value.length - 1; i >= 0; --i) {// 从右向左遍历，因为左侧的配置值具有更高的优先级
             if (i == value.length - 1) {
                 if (null != defaultExtName) {
                     if (!CommonConstants.PROTOCOL_KEY.equals(value[i])) {
@@ -275,7 +281,7 @@ public class AdaptiveClassCodeGenerator {
                         } else {
                             getNameCode = String.format("url.getParameter(\"%s\", \"%s\")", value[i], defaultExtName);
                         }
-                    } else {
+                    } else {// 最右侧的值是protocol
                         getNameCode = String.format("( url.getProtocol() == null ? \"%s\" : url.getProtocol() )", defaultExtName);
                     }
                 } else {

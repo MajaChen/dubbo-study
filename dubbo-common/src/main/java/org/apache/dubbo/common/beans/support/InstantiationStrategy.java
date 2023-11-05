@@ -44,10 +44,10 @@ public class InstantiationStrategy {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T instantiate(Class<T> type) throws ReflectiveOperationException {
+    public <T> T instantiate(Class<T> type) throws ReflectiveOperationException {// 基于反射创建对象
 
         // should not use default constructor directly, maybe also has another constructor matched scope model arguments
-        // 1. try to get default constructor
+        // 1. 获取默认无参构造函数
         Constructor<T> defaultConstructor = null;
         try {
             defaultConstructor = type.getConstructor();
@@ -55,11 +55,11 @@ public class InstantiationStrategy {
             // ignore no default constructor
         }
 
-        // 2. use matched constructor if found
+        // 2. 获取全部符合条件的构造方法
         List<Constructor<?>> matchedConstructors = new ArrayList<>();
-        Constructor<?>[] declaredConstructors = type.getConstructors();
+        Constructor<?>[] declaredConstructors = type.getConstructors();// 获取全部构造方法
         for (Constructor<?> constructor : declaredConstructors) {
-            if (isMatched(constructor)) {
+            if (isMatched(constructor)) { // 参数类型必须是ScopeModel的子类
                 matchedConstructors.add(constructor);
             }
         }
@@ -68,9 +68,11 @@ public class InstantiationStrategy {
             matchedConstructors.remove(defaultConstructor);
         }
 
-        // match order:
-        // 1. the only matched constructor with parameters
-        // 2. default constructor if absent
+        /*
+        * 两类构造方法：
+        * 1. 带参的，参数类型是ScopeModel子类
+        * 2. 默认无参
+        * */
 
         Constructor<?> targetConstructor;
         if (matchedConstructors.size() > 1) {
@@ -89,7 +91,7 @@ public class InstantiationStrategy {
         Class<?>[] parameterTypes = targetConstructor.getParameterTypes();
         Object[] args = new Object[parameterTypes.length];
         for (int i = 0; i < parameterTypes.length; i++) {
-            args[i] = getArgumentValueForType(parameterTypes[i]);
+            args[i] = getArgumentValueForType(parameterTypes[i]);// 如果是有参构造函数，获取参数实例，不下钻
         }
         return (T) targetConstructor.newInstance(args);
     }
