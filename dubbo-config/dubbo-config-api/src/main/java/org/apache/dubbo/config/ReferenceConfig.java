@@ -304,11 +304,11 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         }
     }
 
-    protected synchronized void init() {
+    protected synchronized void init() {// 服务引用的入口方法
         init(true);
     }
 
-    protected synchronized void init(boolean check) {
+    protected synchronized void init(boolean check) {// 开始服务引用
         if (initialized && ref != null) {
             return;
         }
@@ -330,6 +330,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             // TODO, uncomment this line once service key is unified
             serviceMetadata.generateServiceKey();
 
+            // 构造引用参数（读取配置）
             Map<String, String> referenceParameters = appendConfig();
 
             ModuleServiceRepository repository = getScopeModel().getServiceRepository();
@@ -350,6 +351,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
             serviceMetadata.getAttachments().putAll(referenceParameters);
 
+            // 创建代理对象，由代理对象实现服务引用
             ref = createProxy(referenceParameters);
 
             serviceMetadata.setTarget(ref);
@@ -451,15 +453,16 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
     }
 
     @SuppressWarnings({"unchecked"})
-    private T createProxy(Map<String, String> referenceParameters) {
+    private T createProxy(Map<String, String> referenceParameters) {// 创建服务引用的代理对象
         urls.clear();
 
         meshModeHandleUrl(referenceParameters);
 
+        // 用户显示指定了url，可能是直连，也可能是注册中心的地址 - 根据给定的url
         if (StringUtils.isNotEmpty(url)) {
             // user specified URL, could be peer-to-peer address, or register center's address.
             parseUrl(referenceParameters);
-        } else {
+        } else {// 没有显示指定url -
             // if protocols not in jvm checkRegistry
             aggregateUrlFromRegistry(referenceParameters);
         }
