@@ -458,14 +458,15 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
         meshModeHandleUrl(referenceParameters);
 
-        // 用户显示指定了url，可能是直连，也可能是注册中心的地址 - 根据给定的url
+        // 用户显示指定了url，可能是直连，也可能是注册中心的地址 - 解析给定的url存入urls
         if (StringUtils.isNotEmpty(url)) {
             // user specified URL, could be peer-to-peer address, or register center's address.
             parseUrl(referenceParameters);
-        } else {// 没有显示指定url -
+        } else {// 没有显示指定url - 自动发现注册中心，解析注册中心url存入urls
             // if protocols not in jvm checkRegistry
             aggregateUrlFromRegistry(referenceParameters);
         }
+        // 基于urls创建invoker
         createInvoker();
 
         if (logger.isInfoEnabled()) {
@@ -557,7 +558,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
     /**
      * Parse the directly configured url.
      */
-    private void parseUrl(Map<String, String> referenceParameters) {
+    private void parseUrl(Map<String, String> referenceParameters) {// 解析显示指定的url，存入urls
         String[] us = SEMICOLON_SPLIT_PATTERN.split(url);
         if (ArrayUtils.isNotEmpty(us)) {
             for (String u : us) {
@@ -567,9 +568,9 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 }
                 url = url.setScopeModel(getScopeModel());
                 url = url.setServiceModel(consumerModel);
-                if (UrlUtils.isRegistry(url)) {
+                if (UrlUtils.isRegistry(url)) {// registry
                     urls.add(url.putAttribute(REFER_KEY, referenceParameters));
-                } else {
+                } else {// 直连
                     URL peerUrl = getScopeModel().getApplicationModel().getBeanFactory().getBean(ClusterUtils.class).mergeUrl(url, referenceParameters);
                     peerUrl = peerUrl.putAttribute(PEER_KEY, true);
                     urls.add(peerUrl);
@@ -581,9 +582,9 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
     /**
      * Get URLs from the registry and aggregate them.
      */
-    private void aggregateUrlFromRegistry(Map<String, String> referenceParameters) {
+    private void aggregateUrlFromRegistry(Map<String, String> referenceParameters) {// 获取注册中心urls
         checkRegistry();
-        List<URL> us = ConfigValidationUtils.loadRegistries(this, false);
+        List<URL> us = ConfigValidationUtils.loadRegistries(this, false);// 获取注册中心地址
         if (CollectionUtils.isNotEmpty(us)) {
             for (URL u : us) {
                 URL monitorUrl = ConfigValidationUtils.loadMonitor(this, u);
@@ -614,27 +615,27 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
 
     /**
-     * \create a reference invoker
+     * create a reference invoker
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private void createInvoker() {
-        if (urls.size() == 1) {
+    private void createInvoker() {// 基于urls创建invoker
+        if (urls.size() == 1) {// 只有一个url的情况
             URL curUrl = urls.get(0);
-            invoker = protocolSPI.refer(interfaceClass, curUrl);
+            invoker = protocolSPI.refer(interfaceClass, curUrl);// 生成单个invoker
             // registry url, mesh-enable and unloadClusterRelated is true, not need Cluster.
             if (!UrlUtils.isRegistry(curUrl) &&
                     !curUrl.getParameter(UNLOAD_CLUSTER_RELATED, false)) {
                 List<Invoker<?>> invokers = new ArrayList<>();
-                invokers.add(invoker);
-                invoker = Cluster.getCluster(getScopeModel(), Cluster.DEFAULT).join(new StaticDirectory(curUrl, invokers), true);
+                invokers.add(invoker);// invokers记录了多个具体的invoker
+                invoker = Cluster.getCluster(getScopeModel(), Cluster.DEFAULT).join(new StaticDirectory(curUrl, invokers), true);// 利用集群组合多个invokers生成最终的invoker
             }
-        } else {
+        } else {// 有多个url的情况
             List<Invoker<?>> invokers = new ArrayList<>();
             URL registryUrl = null;
             for (URL url : urls) {
                 // For multi-registry scenarios, it is not checked whether each referInvoker is available.
                 // Because this invoker may become available later.
-                invokers.add(protocolSPI.refer(interfaceClass, url));
+                invokers.add(protocolSPI.refer(interfaceClass, url));// invokers记录了多个具体的invoker
 
                 if (UrlUtils.isRegistry(url)) {
                     // use last registry url
@@ -648,7 +649,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 String cluster = registryUrl.getParameter(CLUSTER_KEY, ZoneAwareCluster.NAME);
                 // The invoker wrap sequence would be: ZoneAwareClusterInvoker(StaticDirectory) -> FailoverClusterInvoker
                 // (RegistryDirectory, routing happens here) -> Invoker
-                invoker = Cluster.getCluster(registryUrl.getScopeModel(), cluster, false).join(new StaticDirectory(registryUrl, invokers), false);
+                invoker = Cluster.getCluster(registryUrl.getScopeModel(), cluster, false).join(new StaticDirectory(registryUrl, invokers), false);// 结合集群功能生成最终的invoker
             } else {
                 // not a registry url, must be direct invoke.
                 if (CollectionUtils.isEmpty(invokers)) {
@@ -656,7 +657,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 }
                 URL curUrl = invokers.get(0).getUrl();
                 String cluster = curUrl.getParameter(CLUSTER_KEY, Cluster.DEFAULT);
-                invoker = Cluster.getCluster(getScopeModel(), cluster).join(new StaticDirectory(curUrl, invokers), true);
+                invoker = Cluster.getCluster(getScopeModel(), cluster).join(new StaticDirectory(curUrl, invokers), true);// 结合集群功能生成最终的invoker
             }
         }
     }
