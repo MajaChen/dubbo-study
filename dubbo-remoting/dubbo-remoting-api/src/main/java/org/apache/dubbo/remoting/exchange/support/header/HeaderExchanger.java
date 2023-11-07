@@ -38,7 +38,7 @@ public class HeaderExchanger implements Exchanger {// Exchanger的定位是Excha
     public static final String NAME = "header";
 
     @Override
-    public ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {/
+    public ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {
         /*
         * 创建Client对象，Client是最底层的完成网络通信的客户端，在此基础上创建HeaderExchangeClient
         * ExchangeClient封装了Client
