@@ -396,8 +396,12 @@ public class DubboProtocol extends AbstractProtocol {
         loadServerProperties(protocolServer);
         return protocolServer;
     }
-
-
+    
+    /*
+     * 创建consumer侧的invoker，调用provider侧的invoker
+     * type：接口类
+     * url：远程provider的引用
+     * */
     @Override
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
         checkDestroyed();
@@ -405,21 +409,28 @@ public class DubboProtocol extends AbstractProtocol {
     }
 
     @Override
-    public <T> Invoker<T> protocolBindingRefer(Class<T> serviceType, URL url) throws RpcException {
+    public <T> Invoker<T> protocolBindingRefer(Class<T> serviceType, URL url) throws RpcException {// 创建consumer侧的invoker
         checkDestroyed();
         optimizeSerialization(url);
-
-        // create rpc invoker.
+        
+        /*
+        * 核心参数是clientsProvider和invokers，传invokers是为了能将新创建的invoker从invokers列表移除（自销毁）
+        * */
         DubboInvoker<T> invoker = new DubboInvoker<T>(serviceType, url, getClients(url), invokers);
         invokers.add(invoker);
 
         return invoker;
     }
 
-    private ClientsProvider getClients(URL url) {
+    private ClientsProvider getClients(URL url) {// 基于url创建rpc clients
         int connections = url.getParameter(CONNECTIONS_KEY, 0);
         // whether to share connection
         // if not configured, connection is shared, otherwise, one connection for one service
+        /*
+        * 共享连接：多个service复用一个TCP连接
+        * 非共享连接：一个service对应一个专用的TCP连接
+        *
+        * */
         if (connections == 0) {
             /*
              * The xml configuration should have a higher priority than properties.
@@ -429,13 +440,13 @@ public class DubboProtocol extends AbstractProtocol {
                 : url.getParameter(SHARE_CONNECTIONS_KEY, (String) null);
             connections = Integer.parseInt(shareConnectionsStr);
 
-            return getSharedClient(url, connections);
+            return getSharedClient(url, connections);// 共享连接
         }
 
         List<ExchangeClient> clients = IntStream.range(0, connections)
             .mapToObj((i) -> initClient(url))
             .collect(Collectors.toList());
-        return new ExclusiveClientsProvider(clients);
+        return new ExclusiveClientsProvider(clients);// 非共享连接
     }
 
     /**
@@ -498,11 +509,12 @@ public class DubboProtocol extends AbstractProtocol {
     }
 
     /**
+     *
      * Create new connection
      *
      * @param url
      */
-    private ExchangeClient initClient(URL url) {
+    private ExchangeClient initClient(URL url) {// ExchangeClient是底层完成网络通信的client
         /*
          * Instance of url is InstanceAddressURL, so addParameter actually adds parameters into ServiceInstance,
          * which means params are shared among different services. Since client is shared among services this is currently not a problem.
@@ -519,6 +531,7 @@ public class DubboProtocol extends AbstractProtocol {
             ScopeModel scopeModel = url.getScopeModel();
             int heartbeat = UrlUtils.getHeartbeat(url);
             // Replace InstanceAddressURL with ServiceConfigURL.
+            // 重新生成service config url
             url = new ServiceConfigURL(DubboCodec.NAME, url.getUsername(), url.getPassword(), url.getHost(), url.getPort(), url.getPath(), url.getAllParameters());
             url = url.addParameter(CODEC_KEY, DubboCodec.NAME);
             // enable heartbeat by default
@@ -526,6 +539,7 @@ public class DubboProtocol extends AbstractProtocol {
             url = url.setScopeModel(scopeModel);
 
             // connection should be lazy
+            // 基于新的url创建ExchangeClient，分为懒汉和饿汉模式
             return url.getParameter(LAZY_CONNECT_KEY, false)
                 ? new LazyConnectExchangeClient(url, requestHandler)
                 : Exchangers.connect(url, requestHandler);

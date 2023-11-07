@@ -90,14 +90,14 @@ public class Exchangers {
         return connect(URL.valueOf(url), handler);
     }
 
-    public static ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {
+    public static ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {// 基于url和handler创建ExchangeClient
         if (url == null) {
             throw new IllegalArgumentException("url == null");
         }
         if (handler == null) {
             throw new IllegalArgumentException("handler == null");
         }
-        return getExchanger(url).connect(url, handler);
+        return getExchanger(url).connect(url, handler);// 具体的创建逻辑，先得到exchanger，默认的是header exchanger
     }
 
     public static Exchanger getExchanger(URL url) {

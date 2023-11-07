@@ -40,8 +40,9 @@ public class JavassistProxyFactory extends AbstractProxyFactory {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T getProxy(Invoker<T> invoker, Class<?>[] interfaces) {
+    public <T> T getProxy(Invoker<T> invoker, Class<?>[] interfaces) {// 创建代理对象，代理interfaces（一个interface可能继承了其他interface，因此有多个），基于invoker来实现调用
         try {
+            // 核心是getProxy方法，返回Proxy对象，它的newInstance方法根据handler返回一个对象，Proxy对象接受InvokerInvocationHandler作为入参，最终调用invoker，并可以在调用前后做一些操作
             return (T) Proxy.getProxy(interfaces).newInstance(new InvokerInvocationHandler(invoker));
         } catch (Throwable fromJavassist) {
             // try fall back to JDK proxy factory

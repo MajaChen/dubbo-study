@@ -51,7 +51,7 @@ public class Proxy {
     private final Class<?> classToCreate;
 
     protected Proxy(Class<?> classToCreate) {
-        this.classToCreate = classToCreate;
+        this.classToCreate = classToCreate;// 被代理的类
     }
 
     /**
@@ -59,6 +59,9 @@ public class Proxy {
      *
      * @param ics interface class array.
      * @return Proxy instance.
+     *
+     * 生成Proxy对象，Proxy只是一层壳，它封装了一个Class对象，该Class是用javassist生成的，
+     * Class接受InvocationHandler作为入参，代理类的任何方法调用都会转向handler.invoke(method, args)，即使用反射来调用原接口定义的方法
      */
     public static Proxy getProxy(Class<?>... ics) {
         if (ics.length > MAX_PROXY_COUNT) {
@@ -84,7 +87,12 @@ public class Proxy {
                 proxy = cache.get(key);
                 if (proxy == null) {
                     // create Proxy class.
-                    proxy = new Proxy(buildProxyClass(cl, ics, domain));
+                    /*
+                    * 先利用代码生成技术生成一个Class对象，该Class接受InvocationHandler作为入参，调用构造函数将生成的Class对象传入Proxy
+                    * */
+                    proxy = new Proxy(buildProxyClass(cl, ics, domain));//
+                    
+                    
                     cache.put(key, proxy);
                 }
             }
@@ -115,8 +123,12 @@ public class Proxy {
         return sb.toString();
     }
 
+    /*
+    * 生成Proxy Class对象
+    * 这里没有使用自适应扩展，而是直接使用javassist技术
+    * */
     private static Class<?> buildProxyClass(ClassLoader cl, Class<?>[] ics, ProtectionDomain domain) {
-        ClassGenerator ccp = null;
+        ClassGenerator ccp = null;// ClassGenerator封装了javassist
         try {
             ccp = ClassGenerator.newInstance(cl);
 
@@ -130,18 +142,18 @@ public class Proxy {
                 String npkg = ic.getPackage().getName();
                 if (!Modifier.isPublic(ic.getModifiers())) {
                     if (!pkg.equals(npkg)) {
-                        throw new IllegalArgumentException("non-public interfaces from different packages");
+                        throw new IllegalArgumentException("non-public interfaces from different packages");// 子接口与父接口位于不同的包，父接口存在non public的方法
                     }
                 }
 
                 ccp.addInterface(ic);
 
                 for (Method method : ic.getMethods()) {
-                    String desc = ReflectUtils.getDesc(method);
+                    String desc = ReflectUtils.getDesc(method);// 方法的描述符
                     if (worked.contains(desc) || Modifier.isStatic(method.getModifiers())) {
                         continue;
                     }
-                    worked.add(desc);
+                    worked.add(desc);// 避免处理相同的方法，比如子接口和父接口定义了相同的方法
 
                     int ix = methods.size();
                     Class<?> rt = method.getReturnType();
@@ -151,6 +163,7 @@ public class Proxy {
                     for (int j = 0; j < pts.length; j++) {
                         code.append(" args[").append(j).append("] = ($w)$").append(j + 1).append(';');
                     }
+                    //  Object ret = handler.invoke(this, methods[1...N], args);
                     code.append(" Object ret = handler.invoke(this, methods[").append(ix).append("], args);");
                     if (!Void.TYPE.equals(rt)) {
                         code.append(" return ").append(asArgument(rt, "ret")).append(';');
@@ -164,6 +177,7 @@ public class Proxy {
             // create ProxyInstance class.
             String pcn = neighbor.getName() + "DubboProxy" + PROXY_CLASS_COUNTER.getAndIncrement();
             ccp.setClassName(pcn);
+            // 设置InvocationHandler属性和对应的构造函数
             ccp.addField("public static java.lang.reflect.Method[] methods;");
             ccp.addField("private " + InvocationHandler.class.getName() + " handler;");
             ccp.addConstructor(Modifier.PUBLIC, new Class<?>[]{InvocationHandler.class}, new Class<?>[0], "handler=$1;");
@@ -228,10 +242,10 @@ public class Proxy {
      *
      * @return instance.
      */
-    public Object newInstance(InvocationHandler handler) {
+    public Object newInstance(InvocationHandler handler) {// 返回代理对象
         Constructor<?> constructor;
         try {
-            constructor = classToCreate.getDeclaredConstructor(InvocationHandler.class);
+            constructor = classToCreate.getDeclaredConstructor(InvocationHandler.class);// 利用反射生成代理对象，代理对象以InvocationHandler为入参
             return constructor.newInstance(handler);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);

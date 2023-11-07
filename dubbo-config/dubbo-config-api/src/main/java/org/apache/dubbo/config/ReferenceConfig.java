@@ -305,6 +305,19 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
     }
 
     protected synchronized void init() {// 服务引用的入口方法
+        /*
+        * 总体分为两步：
+        * （0. 读取和封装配置）
+        * 1. 创建invoker
+        * 2. 在invoker外层封装一层proxy
+        *
+        * 对比服务暴露：
+        * （0. 读取和封装配置）
+        * 1. 创建invoker
+        * 2. 在invoker外层封装一层exporter
+        *
+        * invoker在consumer侧和provider侧都是核心，是远程调用的实际承担者
+        * */
         init(true);
     }
 
@@ -462,7 +475,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         if (StringUtils.isNotEmpty(url)) {
             // user specified URL, could be peer-to-peer address, or register center's address.
             parseUrl(referenceParameters);
-        } else {// 没有显示指定url - 自动发现注册中心，解析注册中心url存入urls
+        } else {// 没有显示指定url - 读取远程注册中心的url存入urls
             // if protocols not in jvm checkRegistry
             aggregateUrlFromRegistry(referenceParameters);
         }
@@ -482,6 +495,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         MetadataUtils.publishServiceDefinition(consumerUrl, consumerModel.getServiceModel(), getApplicationModel());
 
         // create service proxy
+        // 基于invoker创建proxy，默认使用javaassistant动态代理基础创建proxy
         return (T) proxyFactory.getProxy(invoker, ProtocolUtils.isGeneric(generic));
     }
 
@@ -618,7 +632,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
      * create a reference invoker
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private void createInvoker() {// 基于urls创建invoker
+    private void createInvoker() {// 基于urls创建invoker，先创建单个invoker，再通过集群将多个invoker合并成一个invoker
         if (urls.size() == 1) {// 只有一个url的情况
             URL curUrl = urls.get(0);
             invoker = protocolSPI.refer(interfaceClass, curUrl);// 生成单个invoker

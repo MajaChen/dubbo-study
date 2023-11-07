@@ -77,7 +77,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
         this(serviceType, url, clientsProvider, null);
     }
 
-    public DubboInvoker(Class<T> serviceType, URL url, ClientsProvider clientsProvider, Set<Invoker<?>> invokers) {
+    public DubboInvoker(Class<T> serviceType, URL url, ClientsProvider clientsProvider, Set<Invoker<?>> invokers) {// 核心参数是clientsProvider
         super(serviceType, url, new String[]{INTERFACE_KEY, GROUP_KEY, TOKEN_KEY});
         this.clientsProvider = clientsProvider;
         this.invokers = invokers;

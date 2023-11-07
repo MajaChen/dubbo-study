@@ -52,7 +52,7 @@ public class Transporters {
         return connect(URL.valueOf(url), handler);
     }
 
-    public static Client connect(URL url, ChannelHandler... handlers) throws RemotingException {
+    public static Client connect(URL url, ChannelHandler... handlers) throws RemotingException {// 创建Client
         if (url == null) {
             throw new IllegalArgumentException("url == null");
         }
@@ -67,7 +67,7 @@ public class Transporters {
         return getTransporter(url).connect(url, handler);
     }
 
-    public static Transporter getTransporter(URL url) {
+    public static Transporter getTransporter(URL url) {// 创建Transporter的自适应扩展，默认是netty transporter
         return url.getOrDefaultFrameworkModel().getExtensionLoader(Transporter.class).getAdaptiveExtension();
     }
 

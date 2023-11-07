@@ -33,12 +33,16 @@ import static org.apache.dubbo.remoting.Constants.IS_PU_SERVER_KEY;
  *
  *
  */
-public class HeaderExchanger implements Exchanger {
+public class HeaderExchanger implements Exchanger {// Exchanger的定位是ExchangeClient的工厂
 
     public static final String NAME = "header";
 
     @Override
-    public ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {
+    public ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {/
+        /*
+        * 创建Client对象，Client是最底层的完成网络通信的客户端，在此基础上创建HeaderExchangeClient
+        * ExchangeClient封装了Client
+        * */
         return new HeaderExchangeClient(Transporters.connect(url, new DecodeHandler(new HeaderExchangeHandler(handler))), true);
     }
 
