@@ -1,4 +1,4 @@
-package org.apache.dubbo.test.common.chxy.spi;
+package org.apache.dubbo.test.spi;
 
 public class OracleDataBaseSPIImpl implements DataBaseSPI {
     

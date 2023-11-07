@@ -1,0 +1,3 @@
+impl1=org.apache.dubbo.test.spi.SimpleExtImpl1
+impl2=org.apache.dubbo.test.spi.SimpleExtImpl2
+impl3=org.apache.dubbo.test.spi.SimpleExtImpl3

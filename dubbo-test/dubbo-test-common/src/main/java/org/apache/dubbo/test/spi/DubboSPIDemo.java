@@ -1,4 +1,4 @@
-package org.apache.dubbo.test.common.chxy.spi;
+package org.apache.dubbo.test.spi;
 
 import org.apache.dubbo.common.extension.ExtensionLoader;
 import org.apache.dubbo.rpc.model.ApplicationModel;
