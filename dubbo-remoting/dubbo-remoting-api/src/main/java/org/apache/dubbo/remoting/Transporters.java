@@ -32,7 +32,7 @@ public class Transporters {
         return bind(URL.valueOf(url), handler);
     }
 
-    public static RemotingServer bind(URL url, ChannelHandler... handlers) throws RemotingException {
+    public static RemotingServer bind(URL url, ChannelHandler... handlers) throws RemotingException {// 创建RemotingServer(Transporter层)，绑定url和handler
         if (url == null) {
             throw new IllegalArgumentException("url == null");
         }
@@ -45,7 +45,7 @@ public class Transporters {
         } else {
             handler = new ChannelHandlerDispatcher(handlers);
         }
-        return getTransporter(url).bind(url, handler);
+        return getTransporter(url).bind(url, handler);// 获取Transporter的自适应扩展，默认是netty，不再下钻
     }
 
     public static Client connect(String url, ChannelHandler... handler) throws RemotingException {

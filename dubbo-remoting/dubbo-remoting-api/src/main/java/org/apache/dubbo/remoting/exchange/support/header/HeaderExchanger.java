@@ -47,13 +47,13 @@ public class HeaderExchanger implements Exchanger {// Exchanger的定位是Excha
     }
 
     @Override
-    public ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingException {
+    public ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingException {// 用于服务器端，创建ExchangeServer，绑定url和handler，核心逻辑在handler
         ExchangeServer server;
         boolean isPuServerKey = url.getParameter(IS_PU_SERVER_KEY, false);
         if(isPuServerKey) {
             server = new HeaderExchangeServer(PortUnificationExchanger.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
         }else {
-            server = new HeaderExchangeServer(Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
+            server = new HeaderExchangeServer(Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));// 再包了一层，内层是Transporter，外层是ExchangeServer
         }
         return server;
     }

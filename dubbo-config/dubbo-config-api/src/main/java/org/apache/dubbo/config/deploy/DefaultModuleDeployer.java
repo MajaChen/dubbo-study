@@ -141,14 +141,14 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
     }
 
     @Override
-    public Future start() throws IllegalStateException {
+    public Future start() throws IllegalStateException {// 启动服务
         // initialize，maybe deadlock applicationDeployer lock & moduleDeployer lock
         applicationDeployer.initialize();
 
         return startSync();
     }
 
-    private synchronized Future startSync() throws IllegalStateException {
+    private synchronized Future startSync() throws IllegalStateException {// 同步启动
         if (isStopping() || isStopped() || isFailed()) {
             throw new IllegalStateException(getIdentifier() + " is stopping or stopped, can not start again");
         }
@@ -164,7 +164,7 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
             initialize();
 
             // export services
-            exportServices();
+            exportServices();// 暴露服务
 
             // prepare application instance
             // exclude internal module to avoid wait itself
@@ -388,7 +388,7 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
         moduleModel.getConfigManager().refreshAll();
     }
 
-    private void exportServices() {
+    private void exportServices() {// 暴露服务
         for (ServiceConfigBase sc : configManager.getServices()) {
             exportServiceInternal(sc);
         }
@@ -436,7 +436,7 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
         } else {
             if (!sc.isExported()) {
                 sc.export(RegisterTypeEnum.AUTO_REGISTER_BY_DEPLOYER);
-                exportedServices.add(sc);
+                exportedServices.add(sc);// 暴露服务
             }
         }
     }

@@ -109,7 +109,7 @@ import static org.apache.dubbo.remoting.Constants.CLIENT_KEY;
 /**
  * initialize and start application instance
  */
-public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationModel> implements ApplicationDeployer {
+public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationModel> implements ApplicationDeployer {// 专用于以Api方式启动dubbo服务
 
     private static final ErrorTypeAwareLogger logger = LoggerFactory.getErrorTypeAwareLogger(DefaultApplicationDeployer.class);
 

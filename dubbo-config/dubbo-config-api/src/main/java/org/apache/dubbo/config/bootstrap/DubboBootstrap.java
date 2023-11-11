@@ -223,7 +223,7 @@ public final class DubboBootstrap {
      * @param wait If true, wait for startup to complete, or else no waiting.
      * @return
      */
-    public DubboBootstrap start(boolean wait) {
+    public DubboBootstrap start(boolean wait) {// 启动dubbo服务的入口点，用于以Api方式启动dubbo服务
         Future future = applicationDeployer.start();
         if (wait) {
             try {

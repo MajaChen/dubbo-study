@@ -51,7 +51,7 @@ import java.util.concurrent.locks.Lock;
  * <p>
  */
 
-public class ApplicationModel extends ScopeModel {
+public class ApplicationModel extends ScopeModel {// 应用级别的model
     protected static final Logger LOGGER = LoggerFactory.getLogger(ApplicationModel.class);
     public static final String NAME = "ApplicationModel";
     private final List<ModuleModel> moduleModels = new CopyOnWriteArrayList<>();

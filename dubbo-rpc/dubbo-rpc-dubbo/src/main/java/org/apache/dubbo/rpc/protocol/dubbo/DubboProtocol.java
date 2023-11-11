@@ -112,7 +112,7 @@ public class DubboProtocol extends AbstractProtocol {
     private final ExchangeHandler requestHandler;
 
     public DubboProtocol(FrameworkModel frameworkModel) {
-        requestHandler = new ExchangeHandlerAdapter(frameworkModel) {
+        requestHandler = new ExchangeHandlerAdapter(frameworkModel) {// requestHandler在初始化方法中完成创建，在consumer侧和provider侧共用
 
             @Override
             public CompletableFuture<Object> reply(ExchangeChannel channel, Object message) throws RemotingException {
@@ -336,7 +336,7 @@ public class DubboProtocol extends AbstractProtocol {
         return exporter;
     }
 
-    private void openServer(URL url) {// 本地启动Exporter
+    private void openServer(URL url) {// 本地启动Exporter dubbo://10.224.200.41:20880/org.apache.dubbo.samples.api.GreetingsService?anyhost=true&application=first-dubbo-provider&background=false&bind.ip=10.224.200.41&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&executor-management-mode=isolation&file-cache=true&generic=false&interface=org.apache.dubbo.samples.api.GreetingsService&methods=sayHello,sayHi&pid=21168&prefer.serialization=fastjson2,hessian2&qos.port=33333&release=3.2.8-SNAPSHOT&service-name-mapping=true&side=provider&timestamp=1699446584199
         checkDestroyed();
         // find server.
         String key = url.getAddress();
@@ -349,7 +349,7 @@ public class DubboProtocol extends AbstractProtocol {
                 synchronized (this) {
                     server = serverMap.get(key);
                     if (server == null) {
-                        serverMap.put(key, createServer(url));
+                        serverMap.put(key, createServer(url));// 创建server
                         return;
                     }
                 }
@@ -369,13 +369,13 @@ public class DubboProtocol extends AbstractProtocol {
     private ProtocolServer createServer(URL url) {// 本地启动server之具体逻辑
         url = URLBuilder.from(url)
             // send readonly event when server closes, it's enabled by default
-            .addParameterIfAbsent(CHANNEL_READONLYEVENT_SENT_KEY, Boolean.TRUE.toString())
+            .addParameterIfAbsent(CHANNEL_READONLYEVENT_SENT_KEY, Boolean.TRUE.toString())// channel.readonly.sent=true
             // enable heartbeat by default
-            .addParameterIfAbsent(HEARTBEAT_KEY, String.valueOf(DEFAULT_HEARTBEAT))
-            .addParameter(CODEC_KEY, DubboCodec.NAME)
+            .addParameterIfAbsent(HEARTBEAT_KEY, String.valueOf(DEFAULT_HEARTBEAT))// heartbeat=60000,1m
+            .addParameter(CODEC_KEY, DubboCodec.NAME)// codec=dubbo
             .build();
-
-        String transporter = url.getParameter(SERVER_KEY, DEFAULT_REMOTING_SERVER);
+        
+        String transporter = url.getParameter(SERVER_KEY, DEFAULT_REMOTING_SERVER);// default to netty
         if (StringUtils.isNotEmpty(transporter) && !url.getOrDefaultFrameworkModel().getExtensionLoader(Transporter.class).hasExtension(transporter)) {
             throw new RpcException("Unsupported server type: " + transporter + ", url: " + url);
         }
@@ -400,7 +400,7 @@ public class DubboProtocol extends AbstractProtocol {
     /*
      * 创建consumer侧的invoker，调用provider侧的invoker
      * type：接口类
-     * url：远程provider的引用
+     * url：远程provider的直接引用
      * */
     @Override
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
@@ -462,10 +462,10 @@ public class DubboProtocol extends AbstractProtocol {
         // connectNum must be greater than or equal to 1
         int expectedConnectNum = Math.max(connectNum, 1);
         return referenceClientMap.compute(key, (originKey, originValue) -> {
-            if (originValue != null && originValue.increaseCount()) {
+            if (originValue != null && originValue.increaseCount()) {// 已经拥有通向provider的连接，则增加计数
                 return originValue;
             } else {
-                return new SharedClientsProvider(this, originKey, buildReferenceCountExchangeClientList(url, expectedConnectNum));
+                return new SharedClientsProvider(this, originKey, buildReferenceCountExchangeClientList(url, expectedConnectNum));// 否则新建，直接走到initClient方法，忽略中间的垃圾代码
             }
         });
     }
@@ -514,7 +514,7 @@ public class DubboProtocol extends AbstractProtocol {
      *
      * @param url
      */
-    private ExchangeClient initClient(URL url) {// ExchangeClient是底层完成网络通信的client
+    private ExchangeClient initClient(URL url) {// 创建ExchangeClient，它是底层完成网络通信的client，对应exchange层
         /*
          * Instance of url is InstanceAddressURL, so addParameter actually adds parameters into ServiceInstance,
          * which means params are shared among different services. Since client is shared among services this is currently not a problem.
@@ -539,7 +539,7 @@ public class DubboProtocol extends AbstractProtocol {
             url = url.setScopeModel(scopeModel);
 
             // connection should be lazy
-            // 基于新的url创建ExchangeClient，分为懒汉和饿汉模式
+            // 基于新的url创建ExchangeClient，分为懒汉和饿汉模式，懒汉模式是在实际发起调用的时候通过方法回调创建client
             return url.getParameter(LAZY_CONNECT_KEY, false)
                 ? new LazyConnectExchangeClient(url, requestHandler)
                 : Exchangers.connect(url, requestHandler);

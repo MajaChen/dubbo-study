@@ -31,7 +31,7 @@ public class Exchangers {
     private Exchangers() {
     }
 
-    public static ExchangeServer bind(String url, Replier<?> replier) throws RemotingException {
+    public static ExchangeServer bind(String url, Replier<?> replier) throws RemotingException {// 用于server端
         return bind(URL.valueOf(url), replier);
     }
 
@@ -51,7 +51,7 @@ public class Exchangers {
         return bind(URL.valueOf(url), handler);
     }
 
-    public static ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingException {
+    public static ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingException {// 创建ExchangeServer，绑定url和handler
         if (url == null) {
             throw new IllegalArgumentException("url == null");
         }
@@ -62,7 +62,7 @@ public class Exchangers {
         return getExchanger(url).bind(url, handler);
     }
 
-    public static ExchangeClient connect(String url) throws RemotingException {
+    public static ExchangeClient connect(String url) throws RemotingException {// 用于client端
         return connect(URL.valueOf(url));
     }
 

@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 /**
  * Model of dubbo framework, it can be shared with multiple applications.
  */
-public class FrameworkModel extends ScopeModel {
+public class FrameworkModel extends ScopeModel {// 可以在多个dubbo application之间共享
 
     // ========================= Static Fields Start ===================================
 

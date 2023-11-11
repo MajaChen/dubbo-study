@@ -227,7 +227,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         unexported = true;
         onUnexpoted();
         ModuleServiceRepository repository = getScopeModel().getServiceRepository();
-        repository.unregisterProvider(providerModel);
+        repository.unregisterProvider(providerModel);// 取消注册
     }
 
     private void waitForIdle() {
@@ -315,7 +315,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             if (this.shouldExport()) {// 对应配置文件中的export属性
                 this.init();
 
-                if (shouldDelay()) {// 延迟暴露
+                if (shouldDelay()) {// 延迟暴露，对应delay属性
                     // should register if delay export
                     doDelayExport();
                 } else if (Integer.valueOf(-1).equals(getDelay()) &&
@@ -324,7 +324,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                     // should not register by default
                     doExport(RegisterTypeEnum.MANUAL_REGISTER);// 暴露服务，但是手动注册
                 } else {
-                    doExport(registerType);
+                    doExport(registerType);// 暴露服务，由deployer自动注册，默认配置
                 }
             }
         }
@@ -492,7 +492,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             return;
         }
 
-        if (StringUtils.isEmpty(path)) {
+        if (StringUtils.isEmpty(path)) {// 对应配置中的path属性，默认是interfaceName
             path = interfaceName;
         }
         doExportUrls(registerType);
@@ -506,7 +506,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         final boolean serverService = ref instanceof ServerService;
         if (serverService) {
             serviceDescriptor = ((ServerService) ref).getServiceDescriptor();
-            repository.registerService(serviceDescriptor);
+            repository.registerService(serviceDescriptor);// 注册服务， k是interface，v是service descriptor
         } else {
             serviceDescriptor = repository.registerService(getInterfaceClass());
         }
@@ -520,7 +520,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         providerModel.setConfig(this);
 
         providerModel.setDestroyRunner(getDestroyRunner());
-        repository.registerProvider(providerModel);
+        repository.registerProvider(providerModel);// 注册ProviderModel在frameworkServiceRepository内
 
         // 加载注册中心的URL
         List<URL> registryURLs = ConfigValidationUtils.loadRegistries(this, true);
@@ -529,11 +529,11 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         for (ProtocolConfig protocolConfig : protocols) {
             String pathKey = URL.buildKey(getContextPath(protocolConfig)
                 .map(p -> p + "/" + path)
-                .orElse(path), group, version);
+                .orElse(path), group, version);// 通常情况下就是接口名
             // stub service will use generated service name
             if (!serverService) {
                 // In case user specified path, register service one more time to map it to path.
-                repository.registerService(pathKey, interfaceClass);
+                repository.registerService(pathKey, interfaceClass);// 注册一个service
             }
             doExportUrlsFor1Protocol(protocolConfig, registryURLs, registerType);// 特定于具体的协议暴露服务
         }
@@ -541,18 +541,18 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         providerModel.setServiceUrls(urls);
     }
 
-    private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs, RegisterTypeEnum registerType) {// 特定于具体的协议暴露服务
-        Map<String, String> map = buildAttributes(protocolConfig);
+    private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs, RegisterTypeEnum registerType) {// 特定于具体的协议暴露服务，可能是注册协议
+        Map<String, String> map = buildAttributes(protocolConfig);// 将所有配置信息封装成map
 
         // 删除无效的kv
         map.keySet().removeIf(key -> StringUtils.isEmpty(key) || StringUtils.isEmpty(map.get(key)));
         // 将protocol相关的信息放入attachment
-        serviceMetadata.getAttachments().putAll(map);
+        serviceMetadata.getAttachments().putAll(map);// 同时将配置信息存入attachments，它也是一个map
 
-        // 构造url
+        // 构造服务的url，如：dubbo://10.224.200.41:20880/org.apache.dubbo.samples.api.GreetingsService?anyhost=true&application=first-dubbo-provider&background=false&bind.ip=10.224.200.41&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&executor-management-mode=isolation&file-cache=true&generic=false&interface=org.apache.dubbo.samples.api.GreetingsService&methods=sayHi&pid=23468&prefer.serialization=fastjson2,hessian2&qos.port=33333&release=3.2.8-SNAPSHOT&side=provider&timestamp=1699420030305
         URL url = buildUrl(protocolConfig, map);
 
-        // 处理服务关联的线程池，只有线程池隔离级别是"isolation"才会生效
+        // 设置服务的线程池，只有线程池隔离级别是"isolation"才会生效，支持线程池隔离
         processServiceExecutor(url);
 
         // 正式暴露
@@ -753,12 +753,12 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         String scope = url.getParameter(SCOPE_KEY);
         // don't export when none is configured
         if (!SCOPE_NONE.equalsIgnoreCase(scope)) {
-            // 只在本地暴露服务，将协议改成injvm，表示该服务只在同个进程内可见
+            // 本地暴露服务，将协议改成injvm，表示该服务只在同个进程内可见
             if (!SCOPE_REMOTE.equalsIgnoreCase(scope)) {
                 exportLocal(url);
             }
 
-            // 暴露服务到远程
+            // 暴露服务到远程（跟暴露服务到本地不冲突）
             if (!SCOPE_LOCAL.equalsIgnoreCase(scope)) {
                 // export to extra protocol is used in remote export
                 String extProtocol = url.getParameter("ext.protocol", "");
@@ -804,10 +804,10 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     private URL exportRemote(URL url, List<URL> registryURLs, RegisterTypeEnum registerType) {// 暴露服务到远程
         // 注册服务到远程并启动服务
         if (CollectionUtils.isNotEmpty(registryURLs) && registerType != RegisterTypeEnum.NEVER_REGISTER) {
-            // 多个注册中心,轮流注册
+            // 多个注册中心,轮流注册，有两种注册协议：registry和service-discovery-registry
             for (URL registryURL : registryURLs) {
                 if (SERVICE_REGISTRY_PROTOCOL.equals(registryURL.getProtocol())) {
-                    url = url.addParameterIfAbsent(SERVICE_NAME_MAPPING_KEY, "true");
+                    url = url.addParameterIfAbsent(SERVICE_NAME_MAPPING_KEY, "true");// service-name-mapping
                 }
 
                 //if protocol is only injvm ,not register
@@ -835,7 +835,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                     }
                 }
 
-                // 包含了注册和启动逻辑，这里的url融合了registryURL和服务本身的url
+                // 包含了注册和启动逻辑，这里的url以registryURL为主，附加服务本身的url（放在export属性中），协议是registry或者service-discovery-registry
                 doExportUrl(registryURL.putAttribute(EXPORT_KEY, url), true, registerType);
             }
 
@@ -845,7 +845,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                 logger.info("Export dubbo service " + interfaceClass.getName() + " to url " + url);
             }
 
-            // 仅包含启动逻辑
+            // 仅包含启动逻辑，这里的url是服务本身的url，协议是dubbo
             doExportUrl(url, true, registerType);
         }
 
@@ -853,19 +853,19 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         return url;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    
     private void doExportUrl(URL url, boolean withMetaData, RegisterTypeEnum registerType) {
         /*
         * 生成exporter（启动服务）并注册服务到远程
         * 具体逻辑
-        * 1. 如果url是一个registry，走RegistryProtocol，将服务注册到远程的注册中心然后在本地启动
-        * 2. 如果url仅代表一个服务，走DubboProtocol或者其他，仅在本地启动服务
+        * 1. 如果url是一个registry(内部的export属性引用了待暴露服务的url)，走RegistryProtocol注册协议，将服务注册到远程的注册中心然后在本地启动，服务在进程间使用
+        * 2. 如果url仅代表一个服务，走DubboProtocol或者其他网络通信协议，仅在本地启动服务，服务在进程内使用
         *
         * 服务暴露的三种情况：
-        * 1. scope=local- 通信修改协议为injvm，然后在本地启动Exporter
+        * 1. scope=local- 通信修改协议为injvm，创建invoker，然后在本地启动Exporter
         * 2. scope=remote
-        *  2.1 register url 为空或者NEVER_REGISTER(register=false)仅在本地启动Exporter
-        *  2.2 一般情况 本地启动Exporter且将服务注册到远程
+        *  2.1 register url 为空或者NEVER_REGISTER(register=false)创建invoker，在本地启动Exporter
+        *  2.2 一般情况 本地启动Exporter且将服务注册到远程，创建invoker，在本地启动Exporter，且将服务发布到注册中心
         * */
         if (!url.getParameter(REGISTER_KEY, true)) {
             registerType = RegisterTypeEnum.MANUAL_REGISTER;
@@ -877,13 +877,13 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         }
 
         /*
-        * 利用代理创建Invoker
+        * 利用代理+反射创建Invoker
         * ref：服务接口的实现类
         * interfaceClass:服务接口
-        * url:标识符 - consumer通过标识符引用服务接口的实现类
+        * url:服务标识符 - consumer通过标识符引用服务接口的实现类
         *
         * 这里面应用了自适应扩展，会根据url中的proxy参数来选择哪种proxy实现，默认是javaassistant
-        * 本质上就是把ref做了一层封装
+        * 把ref做了一层封装：创建一个代理类Wrapper，提供统一的调用接口invokeMethod，会根据调用方传入的method name和ref object，利用反射在object上执行method；以url为标识符关联请求
         * */
         Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, url);
         // 封装了metadata
@@ -891,11 +891,11 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             invoker = new DelegateProviderMetaDataInvoker(invoker, this);
         }
         /*
-        * 在Invoker的基础上再结合protocol创建Exporter，会启动Exporter
+        * 在Invoker的基础上再结合protocol创建Exporter，并启动Exporter
         * 应用了SPI技术，会从Invoker中获取url，据此决定使用哪个protocol
         * */
 
-        Exporter<?> exporter = protocolSPI.export(invoker);
+        Exporter<?> exporter = protocolSPI.export(invoker);// 它是Invoker外面的一层壳，收到请求后会调用Invoker处理请求
         exporters.computeIfAbsent(registerType, k -> new CopyOnWriteArrayList<>()).add(exporter);
     }
 
@@ -904,7 +904,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
      * always export injvm
      */
     private void exportLocal(URL url) {// 只在本地暴露服务，该服务只在同个进程内可见
-        // 修改协议为injvm
+        // 修改协议为injvm，一并修改主机和端口，不需要任何网络通信
         URL local = URLBuilder.from(url)
             .setProtocol(LOCAL_PROTOCOL)
             .setHost(LOCALHOST_VALUE)

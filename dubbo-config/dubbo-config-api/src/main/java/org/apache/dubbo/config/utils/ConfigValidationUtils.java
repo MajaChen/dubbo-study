@@ -192,7 +192,7 @@ public class ConfigValidationUtils {
 
     public static final String IPV6_END_MARK = "]";
 
-    public static List<URL> loadRegistries(AbstractInterfaceConfig interfaceConfig, boolean provider) {
+    public static List<URL> loadRegistries(AbstractInterfaceConfig interfaceConfig, boolean provider) {// provider 侧调用（provider=true）会加上service-discovery-registry协议；consumer侧不会
         // check && override if necessary
         List<URL> registryList = new ArrayList<>();
         ApplicationConfig application = interfaceConfig.getApplication();
@@ -248,7 +248,7 @@ public class ConfigValidationUtils {
                     }
                     result.add(registryURL);
                     if (DEFAULT_REGISTER_MODE_ALL.equalsIgnoreCase(registerMode)
-                        && registryNotExists(registryURL, registryList, REGISTRY_PROTOCOL)) {
+                        && registryNotExists(registryURL, registryList, REGISTRY_PROTOCOL)) {// 这一版本会默认加上service-discovery-registry
                         URL interfaceCompatibleRegistryURL = URLBuilder.from(registryURL)
                             .setProtocol(REGISTRY_PROTOCOL)
                             .removeParameter(REGISTRY_TYPE_KEY)

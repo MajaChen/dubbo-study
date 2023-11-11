@@ -34,7 +34,7 @@ import static org.apache.dubbo.common.constants.LoggerCodeConstants.PROXY_FAILED
 /**
  * JavassistRpcProxyFactory
  */
-public class JavassistProxyFactory extends AbstractProxyFactory {
+public class JavassistProxyFactory extends AbstractProxyFactory {// 封装invoker生成consumer侧的proxy
     private static final ErrorTypeAwareLogger logger = LoggerFactory.getErrorTypeAwareLogger(JavassistProxyFactory.class);
     private final JdkProxyFactory jdkProxyFactory = new JdkProxyFactory();
 
@@ -42,8 +42,8 @@ public class JavassistProxyFactory extends AbstractProxyFactory {
     @SuppressWarnings("unchecked")
     public <T> T getProxy(Invoker<T> invoker, Class<?>[] interfaces) {// 创建代理对象，代理interfaces（一个interface可能继承了其他interface，因此有多个），基于invoker来实现调用
         try {
-            // 核心是getProxy方法，返回Proxy对象，它的newInstance方法根据handler返回一个对象，Proxy对象接受InvokerInvocationHandler作为入参，最终调用invoker，并可以在调用前后做一些操作
-            return (T) Proxy.getProxy(interfaces).newInstance(new InvokerInvocationHandler(invoker));
+            // 核心点是：生成代理类org.apache.dubbo.samples.api.GreetingsServiceDubboProxy0并创建其对象，该类实现了目标接口，有一个类型是InvokerInvocationHandler的handler，实现接口中方法的方式是：调用handler.invoke；所以核心是InvokerInvocationHandler;
+            return (T) Proxy.getProxy(interfaces).newInstance(new InvokerInvocationHandler(invoker));// 在InvokerInvocationHandler中基于invoker发起远程调用
         } catch (Throwable fromJavassist) {
             // try fall back to JDK proxy factory
             try {
@@ -62,10 +62,10 @@ public class JavassistProxyFactory extends AbstractProxyFactory {
     }
 
     @Override
-    public <T> Invoker<T> getInvoker(T proxy, Class<T> type, URL url) {
+    public <T> Invoker<T> getInvoker(T proxy, Class<T> type, URL url) {// 在provid创建invoker，proxy是接口实现对象，type是原接口，url是标识符
         try {
             // TODO Wrapper cannot handle this scenario correctly: the classname contains '$'
-            final Wrapper wrapper = Wrapper.getWrapper(proxy.getClass().getName().indexOf('$') < 0 ? proxy.getClass() : type);
+            final Wrapper wrapper = Wrapper.getWrapper(proxy.getClass().getName().indexOf('$') < 0 ? proxy.getClass() : type);// Wrapper是一个抽象方法，仅能通过getWrapper方法创建实例
             return new AbstractProxyInvoker<T>(proxy, type, url) {
                 @Override
                 protected Object doInvoke(T proxy, String methodName,

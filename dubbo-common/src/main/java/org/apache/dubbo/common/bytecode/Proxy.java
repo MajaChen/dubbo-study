@@ -88,7 +88,7 @@ public class Proxy {
                 if (proxy == null) {
                     // create Proxy class.
                     /*
-                    * 先利用代码生成技术生成一个Class对象，该Class接受InvocationHandler作为入参，调用构造函数将生成的Class对象传入Proxy
+                    * 将javassist生成的class对象作为入参传入Proxy
                     * */
                     proxy = new Proxy(buildProxyClass(cl, ics, domain));//
                     
@@ -124,8 +124,8 @@ public class Proxy {
     }
 
     /*
-    * 生成Proxy Class对象
-    * 这里没有使用自适应扩展，而是直接使用javassist技术
+    * 生成代理类的Class对象，这个代理类实现了目标接口，拥有一个InvocationHandler的私有属性，它实现了目标接口中的所有方法：利用反射调用InvocationHandler的invoke方法，所以核心是传入的InvocationHandler
+    * 这里没有再使用自适应扩展，而是直接使用javassist技术
     * */
     private static Class<?> buildProxyClass(ClassLoader cl, Class<?>[] ics, ProtectionDomain domain) {
         ClassGenerator ccp = null;// ClassGenerator封装了javassist
@@ -146,7 +146,7 @@ public class Proxy {
                     }
                 }
 
-                ccp.addInterface(ic);
+                ccp.addInterface(ic);// 代理类本身实现了这个接口
 
                 for (Method method : ic.getMethods()) {
                     String desc = ReflectUtils.getDesc(method);// 方法的描述符
@@ -175,7 +175,7 @@ public class Proxy {
             }
 
             // create ProxyInstance class.
-            String pcn = neighbor.getName() + "DubboProxy" + PROXY_CLASS_COUNTER.getAndIncrement();
+            String pcn = neighbor.getName() + "DubboProxy" + PROXY_CLASS_COUNTER.getAndIncrement();// 生成类名如 org.apache.dubbo.samples.api.GreetingsServiceDubboProxy0
             ccp.setClassName(pcn);
             // 设置InvocationHandler属性和对应的构造函数
             ccp.addField("public static java.lang.reflect.Method[] methods;");
