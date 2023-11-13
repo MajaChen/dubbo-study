@@ -54,7 +54,7 @@ public abstract class AbstractProxyFactory implements ProxyFactory {
     }
 
     @Override
-    public <T> T getProxy(Invoker<T> invoker, boolean generic) throws RpcException {
+    public <T> T getProxy(Invoker<T> invoker, boolean generic) throws RpcException {// 创建proxy，它主要是填充interfaces数组，通过调用子类的getProxy方法来完成创建
         // when compiling with native image, ensure that the order of the interfaces remains unchanged
         LinkedHashSet<Class<?>> interfaces = new LinkedHashSet<>();
         ClassLoader classLoader = getClassLoader(invoker);
@@ -100,7 +100,7 @@ public abstract class AbstractProxyFactory implements ProxyFactory {
         interfaces.addAll(Arrays.asList(INTERNAL_INTERFACES));
 
         try {
-            return getProxy(invoker, interfaces.toArray(new Class<?>[0]));
+            return getProxy(invoker, interfaces.toArray(new Class<?>[0]));// 真正的创建逻辑
         } catch (Throwable t) {
             if (generic) {
                 if (realInterfaceClass != null) {

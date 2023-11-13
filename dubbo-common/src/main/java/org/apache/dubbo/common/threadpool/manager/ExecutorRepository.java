@@ -182,7 +182,7 @@ public interface ExecutorRepository {
 
     ExecutorSupport getExecutorSupport(URL url);
 
-    static ExecutorRepository getInstance(ApplicationModel applicationModel) {
+    static ExecutorRepository getInstance(ApplicationModel applicationModel) {// 获取线程池集合，使用了自定义扩展，默认使用隔离的线程池
         ExtensionLoader<ExecutorRepository> extensionLoader = applicationModel.getExtensionLoader(ExecutorRepository.class);
         String mode = getMode(applicationModel);
         return StringUtils.isNotEmpty(mode) ? extensionLoader.getExtension(mode) : extensionLoader.getDefaultExtension();

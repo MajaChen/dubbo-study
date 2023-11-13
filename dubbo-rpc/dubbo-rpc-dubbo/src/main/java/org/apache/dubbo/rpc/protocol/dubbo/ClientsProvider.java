@@ -20,7 +20,7 @@ import org.apache.dubbo.remoting.exchange.ExchangeClient;
 
 import java.util.List;
 
-public interface ClientsProvider {
+public interface ClientsProvider {// 在consumer侧提供到provider侧的网络连接
     List<? extends ExchangeClient> getClients();
 
     void close(int timeout);

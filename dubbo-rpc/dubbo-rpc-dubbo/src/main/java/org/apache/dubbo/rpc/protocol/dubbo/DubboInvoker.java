@@ -85,12 +85,12 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
     }
 
     @Override
-    protected Result doInvoke(final Invocation invocation) throws Throwable {
+    protected Result doInvoke(final Invocation invocation) throws Throwable {// 正式发起调用
         RpcInvocation inv = (RpcInvocation) invocation;
         final String methodName = RpcUtils.getMethodName(invocation);
         inv.setAttachment(PATH_KEY, getUrl().getPath());
         inv.setAttachment(VERSION_KEY, version);
-
+        // 获取发起远程调用的client，类型是ExchangeClient，他是在DubboProtocol.initClient
         ExchangeClient currentClient;
         List<? extends ExchangeClient> exchangeClients = clientsProvider.getClients();
         if (exchangeClients.size() == 1) {
@@ -111,29 +111,29 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
             invocation.setAttachment(TIMEOUT_KEY, String.valueOf(timeout));
 
             Integer payload = getUrl().getParameter(PAYLOAD, Integer.class);
-
+            // 构造request
             Request request = new Request();
             if (payload != null) {
                 request.setPayload(payload);
             }
-            request.setData(inv);
+            request.setData(inv);// 核心，设置invocation，指定要调用provider的哪个服务的哪个方法
             request.setVersion(Version.getProtocolVersion());
-
-            if (isOneway) {
+            // 基于client发起远程调用
+            if (isOneway) {// 没有返回结果的调用，直接把request发送出去就完事了
                 boolean isSent = getUrl().getMethodParameter(methodName, Constants.SENT_KEY, false);
                 request.setTwoWay(false);
                 currentClient.send(request, isSent);
                 return AsyncRpcResult.newDefaultAsyncResult(invocation);
-            } else {
+            } else {// 有返回结果的调用，区分同步和异步是在外层AbstractInvoker中完成的
                 request.setTwoWay(true);
-                ExecutorService executor = getCallbackExecutor(getUrl(), inv);
+                ExecutorService executor = getCallbackExecutor(getUrl(), inv);// 获取服务关联的线程池，consumer侧共用一个线程池，为什么要用executor?
                 CompletableFuture<AppResponse> appResponseFuture =
-                    currentClient.request(request, timeout, executor).thenApply(AppResponse.class::cast);
+                    currentClient.request(request, timeout, executor).thenApply(AppResponse.class::cast);// 调用request方法并在收到响应后将结果映射成AppResponse - 这是ExchangeChannel的方法，ExchangeClient集成ExchangeChannel
                 // save for 2.6.x compatibility, for example, TraceFilter in Zipkin uses com.alibaba.xxx.FutureAdapter
                 if (setFutureWhenSync || ((RpcInvocation) invocation).getInvokeMode() != InvokeMode.SYNC) {
                     FutureContext.getContext().setCompatibleFuture(appResponseFuture);
                 }
-                AsyncRpcResult result = new AsyncRpcResult(appResponseFuture, inv);
+                AsyncRpcResult result = new AsyncRpcResult(appResponseFuture, inv);// AsyncRpcResult能够兼容同步和异步调用
                 result.setExecutor(executor);
                 return result;
             }

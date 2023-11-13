@@ -172,7 +172,7 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
     }
 
     @Override
-    public Result invoke(Invocation inv) throws RpcException {
+    public Result invoke(Invocation inv) throws RpcException {// 发起调用（暂时不追究是从哪里发起的）
         // if invoker is destroyed due to address refresh from registry, let's allow the current invoke to proceed
         if (isDestroyed()) {
             logger.warn(PROTOCOL_FAILED_REQUEST, "", "", "Invoker for service " + this + " on consumer " + NetUtils.getLocalHost() + " is destroyed, " + ", dubbo version is " + Version.getVersion() + ", this invoker should not be used any longer");
@@ -181,13 +181,13 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
         RpcInvocation invocation = (RpcInvocation) inv;
 
         // prepare rpc invocation
-        prepareInvocation(invocation);
+        prepareInvocation(invocation);// 为本地调用设置id
 
         // do invoke rpc invocation and return async result
-        AsyncRpcResult asyncResult = doInvokeAndReturn(invocation);
+        AsyncRpcResult asyncResult = doInvokeAndReturn(invocation);// 发起调用，得调用结果
 
         // wait rpc result if sync
-        waitForResultIfSync(asyncResult, invocation);
+        waitForResultIfSync(asyncResult, invocation);// 如果是同步调用，等待响应结果返回
 
         return asyncResult;
     }
@@ -199,7 +199,7 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
 
         inv.setInvokeMode(RpcUtils.getInvokeMode(url, inv));
 
-        RpcUtils.attachInvocationIdIfAsync(getUrl(), inv);
+        RpcUtils.attachInvocationIdIfAsync(getUrl(), inv);// 为本次调用设置id
 
         attachInvocationSerializationId(inv);
     }
@@ -237,10 +237,10 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
         }
     }
 
-    private AsyncRpcResult doInvokeAndReturn(RpcInvocation invocation) {
+    private AsyncRpcResult doInvokeAndReturn(RpcInvocation invocation) {// 发起调用，得调用结果
         AsyncRpcResult asyncResult;
         try {
-            asyncResult = (AsyncRpcResult) doInvoke(invocation);
+            asyncResult = (AsyncRpcResult) doInvoke(invocation);// 结合具体的通信协议来实现远程调用
         } catch (InvocationTargetException e) {
             Throwable te = e.getTargetException();
             if (te != null) {
@@ -265,7 +265,7 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
 
         if (setFutureWhenSync || invocation.getInvokeMode() != InvokeMode.SYNC) {
             // set server context
-            RpcContext.getServiceContext().setFuture(new FutureAdapter<>(asyncResult.getResponseFuture()));
+            RpcContext.getServiceContext().setFuture(new FutureAdapter<>(asyncResult.getResponseFuture()));// 在ServiceContext中设置future，内部基于ThreadLocal来做存储 - 一个线程连续发起两次异步调用，那么第二次势必会覆盖第一次
         }
 
         return asyncResult;
@@ -309,15 +309,15 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
 
     // -- Protected api
 
-    protected ExecutorService getCallbackExecutor(URL url, Invocation inv) {
+    protected ExecutorService getCallbackExecutor(URL url, Invocation inv) {// 如果是sync模式则返回ThreadlessExecutor，否则在consumer侧：采用共享的线程池
         if (InvokeMode.SYNC == RpcUtils.getInvokeMode(getUrl(), inv)) {
             return new ThreadlessExecutor();
         }
-        return ExecutorRepository.getInstance(url.getOrDefaultApplicationModel()).getExecutor(url);
+        return ExecutorRepository.getInstance(url.getOrDefaultApplicationModel()).getExecutor(url);// ExecutorRepository的两个实现类IsolationExecutorRepository和DefaultExecutorRepository存在继承关系，因此最终还是会调用DefaultExecutorRepository的getExecutor方法
     }
 
     /**
      * Specific implementation of the {@link #invoke(Invocation)} method
      */
-    protected abstract Result doInvoke(Invocation invocation) throws Throwable;
+    protected abstract Result doInvoke(Invocation invocation) throws Throwable;// 抽象方法，发起调用的具体逻辑
 }

@@ -27,7 +27,7 @@ import org.apache.dubbo.common.extension.SPI;
  * @see org.apache.dubbo.remoting.Transporter#connect(org.apache.dubbo.common.URL, ChannelHandler)
  */
 @SPI(scope = ExtensionScope.FRAMEWORK)
-public interface ChannelHandler {
+public interface ChannelHandler {// 定义了五种事件：连接事件、关闭连接事件、发送事件、接受事件、异常抛出事件
 
     /**
      * on channel connected.

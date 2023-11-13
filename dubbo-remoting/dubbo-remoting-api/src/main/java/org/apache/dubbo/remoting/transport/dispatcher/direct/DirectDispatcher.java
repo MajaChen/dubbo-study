@@ -23,7 +23,7 @@ import org.apache.dubbo.remoting.Dispatcher;
 /**
  * Direct dispatcher
  */
-public class DirectDispatcher implements Dispatcher {
+public class DirectDispatcher implements Dispatcher {// direct策略的事件派发器
 
     public static final String NAME = "direct";
 

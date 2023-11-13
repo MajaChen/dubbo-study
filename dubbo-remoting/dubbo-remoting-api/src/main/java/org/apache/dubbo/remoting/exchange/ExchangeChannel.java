@@ -65,7 +65,7 @@ public interface ExchangeChannel extends Channel {
      * @return response future
      * @throws RemotingException
      */
-    CompletableFuture<Object> request(Object request, int timeout, ExecutorService executor) throws RemotingException;
+    CompletableFuture<Object> request(Object request, int timeout, ExecutorService executor) throws RemotingException;// 最终的实现类是HeaderExchangeClient
 
     /**
      * get message handler.

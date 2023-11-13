@@ -188,7 +188,7 @@ public class DefaultExecutorRepository implements ExecutorRepository, ExtensionA
     }
 
     @Override
-    public ExecutorService getExecutor(URL url) {
+    public ExecutorService getExecutor(URL url) {// 根据url获取ExecutorService，在consumer侧走固定逻辑返回共享的ExecutorService
         Map<String, ExecutorService> executors = data.get(getExecutorKey(url));
 
         /*
@@ -202,7 +202,8 @@ public class DefaultExecutorRepository implements ExecutorRepository, ExtensionA
             return null;
         }
 
-        // Consumer's executor is sharing globally, key=Integer.MAX_VALUE. Provider's executor is sharing by protocol.
+        // Consumer's executor is sharing globally, key=Integer.MAX_VALUE. P
+        // rovider's executor is sharing by protocol.
         String executorCacheKey = getExecutorSecondKey(url);
         ExecutorService executor = executors.get(executorCacheKey);
         if (executor != null && (executor.isShutdown() || executor.isTerminated())) {

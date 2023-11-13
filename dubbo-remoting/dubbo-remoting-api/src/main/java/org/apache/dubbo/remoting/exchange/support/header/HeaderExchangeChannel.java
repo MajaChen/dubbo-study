@@ -58,7 +58,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         if (channel == null) {
             throw new IllegalArgumentException("channel == null");
         }
-        this.channel = channel;
+        this.channel = channel;// 这个Channel是，由设置
         this.shutdownTimeout = Optional.ofNullable(channel.getUrl())
             .map(URL::getOrDefaultApplicationModel)
             .map(ConfigurationUtils::getServerShutdownTimeout)
@@ -130,11 +130,11 @@ final class HeaderExchangeChannel implements ExchangeChannel {
     }
 
     @Override
-    public CompletableFuture<Object> request(Object request, int timeout, ExecutorService executor) throws RemotingException {
+    public CompletableFuture<Object> request(Object request, int timeout, ExecutorService executor) throws RemotingException {// 正式发起远程调用
         if (closed) {
             throw new RemotingException(this.getLocalAddress(), null, "Failed to send request " + request + ", cause: The channel " + this + " is closed!");
         }
-        Request req;
+        Request req;// 构建request
         if (request instanceof Request) {
             req = (Request) request;
         } else {
@@ -144,9 +144,9 @@ final class HeaderExchangeChannel implements ExchangeChannel {
             req.setTwoWay(true);
             req.setData(request);
         }
-        DefaultFuture future = DefaultFuture.newFuture(channel, req, timeout, executor);
+        DefaultFuture future = DefaultFuture.newFuture(channel, req, timeout, executor);// 将executor作为参数传入Future
         try {
-            channel.send(req);
+            channel.send(req);// 委托给NettyClient将请求发送出去
         } catch (RemotingException e) {
             future.cancel();
             throw e;

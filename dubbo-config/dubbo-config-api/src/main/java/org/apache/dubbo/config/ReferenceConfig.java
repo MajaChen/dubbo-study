@@ -364,7 +364,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
             serviceMetadata.getAttachments().putAll(referenceParameters);// 向attachments中加入配置参数
 
-            // 创建代理对象，由代理对象实现服务引用
+            // 创建代理对象，由代理对象实现服务引用，这个代理对象实现了目标接口的所有方法（InvocationHandler）
             ref = createProxy(referenceParameters);
 
             serviceMetadata.setTarget(ref);

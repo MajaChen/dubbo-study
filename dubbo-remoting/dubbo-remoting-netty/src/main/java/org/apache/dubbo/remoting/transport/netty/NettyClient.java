@@ -89,12 +89,12 @@ public class NettyClient extends AbstractClient {
     @Override
     protected void doConnect() throws Throwable {
         long start = System.currentTimeMillis();
-        ChannelFuture future = bootstrap.connect(getConnectAddress());
+        ChannelFuture future = bootstrap.connect(getConnectAddress());// 调用Netty的api与远程主机建立连接， 地址是ip+port的形式
         try {
             boolean ret = future.awaitUninterruptibly(getConnectTimeout(), TimeUnit.MILLISECONDS);
 
-            if (ret && future.isSuccess()) {
-                Channel newChannel = future.getChannel();
+            if (ret && future.isSuccess()) {// 成功建立连接
+                Channel newChannel = future.getChannel();// 获取一个Netty Channel，代表一条连接
                 newChannel.setInterestOps(Channel.OP_READ_WRITE);
                 try {
                     // Close old channel
@@ -121,7 +121,7 @@ public class NettyClient extends AbstractClient {
                             NettyChannel.removeChannelIfDisconnected(newChannel);
                         }
                     } else {
-                        NettyClient.this.channel = newChannel;
+                        NettyClient.this.channel = newChannel;// 初始化新的Channel
                     }
                 }
             } else if (future.getCause() != null) {
@@ -172,11 +172,15 @@ public class NettyClient extends AbstractClient {
     }
 
     @Override
-    protected org.apache.dubbo.remoting.Channel getChannel() {
+    protected org.apache.dubbo.remoting.Channel getChannel() {// 获取NettyChannel
         Channel c = channel;
         if (c == null || !c.isConnected()) {
             return null;
         }
+        /*
+        * 从CHANNEL_MAP中获取NettyChannel，如果不存在则创建之
+        * handler为什么是this？它对传入的原始的ExchangeHandlerAdapter进行了封装，参考类继承体系
+        * */
         return NettyChannel.getOrAddChannel(c, getUrl(), this);
     }
 

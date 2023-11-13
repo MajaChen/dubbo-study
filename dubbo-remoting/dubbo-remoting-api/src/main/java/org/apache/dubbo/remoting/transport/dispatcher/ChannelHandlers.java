@@ -41,7 +41,7 @@ public class ChannelHandlers {
         INSTANCE = instance;
     }
 
-    protected ChannelHandler wrapInternal(ChannelHandler handler, URL url) {
+    protected ChannelHandler wrapInternal(ChannelHandler handler, URL url) {// 确定事件派发器
         return new MultiMessageHandler(new HeartbeatHandler(url.getOrDefaultFrameworkModel().getExtensionLoader(Dispatcher.class)
                 .getAdaptiveExtension().dispatch(handler, url)));
     }

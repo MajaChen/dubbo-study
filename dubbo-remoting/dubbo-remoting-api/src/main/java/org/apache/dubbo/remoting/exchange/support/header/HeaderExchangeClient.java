@@ -101,7 +101,7 @@ public class HeaderExchangeClient implements ExchangeClient {
     }
 
     @Override
-    public CompletableFuture<Object> request(Object request, int timeout, ExecutorService executor) throws RemotingException {
+    public CompletableFuture<Object> request(Object request, int timeout, ExecutorService executor) throws RemotingException {// 这一层是为了实现引用计数功能，忽略，实际发送过程委托给HeaderExchangeChannel
         return channel.request(request, timeout, executor);
     }
 

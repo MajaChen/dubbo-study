@@ -45,7 +45,7 @@ public class Transporters {
         } else {
             handler = new ChannelHandlerDispatcher(handlers);
         }
-        return getTransporter(url).bind(url, handler);// 获取Transporter的自适应扩展，默认是netty，不再下钻
+        return getTransporter(url).bind(url, handler);// 获取Transporter的自适应扩展，默认是netty
     }
 
     public static Client connect(String url, ChannelHandler... handler) throws RemotingException {

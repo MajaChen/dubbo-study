@@ -75,7 +75,7 @@ public class NettyServer extends AbstractServer implements RemotingServer {
         ChannelFactory channelFactory = new NioServerSocketChannelFactory(boss, worker, getUrl().getPositiveParameter(IO_THREADS_KEY, Constants.DEFAULT_IO_THREADS));
         bootstrap = new ServerBootstrap(channelFactory);
 
-        final NettyHandler nettyHandler = new NettyHandler(getUrl(), this);
+        final NettyHandler nettyHandler = new NettyHandler(getUrl(), this);// 创建nettyHandler，绑定url和handler（Dubbo范畴的handler，处理请求）
         channels = nettyHandler.getChannels();
         // https://issues.jboss.org/browse/NETTY-365
         // https://issues.jboss.org/browse/NETTY-379
@@ -91,9 +91,9 @@ public class NettyServer extends AbstractServer implements RemotingServer {
                 if (idleTimeout > 10000) {
                     pipeline.addLast("timer", new IdleStateHandler(timer, idleTimeout / 1000, 0, 0));
                 }*/
-                pipeline.addLast("decoder", adapter.getDecoder());
-                pipeline.addLast("encoder", adapter.getEncoder());
-                pipeline.addLast("handler", nettyHandler);
+                pipeline.addLast("decoder", adapter.getDecoder());// 注册编码器
+                pipeline.addLast("encoder", adapter.getEncoder());// 注册解码器
+                pipeline.addLast("handler", nettyHandler);// 注册nettyHandler
                 return pipeline;
             }
         });

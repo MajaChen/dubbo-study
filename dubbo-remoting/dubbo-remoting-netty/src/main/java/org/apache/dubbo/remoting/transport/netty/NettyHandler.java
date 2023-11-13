@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * NettyHandler
  */
 @Sharable
-public class NettyHandler extends SimpleChannelHandler {
+public class NettyHandler extends SimpleChannelHandler {// 本质上是一个handler，用于处理请求，问题是：他是在哪里创建的？如何将请求关联到它？
 
     private static final Logger logger = LoggerFactory.getLogger(NettyHandler.class);
 
@@ -46,8 +46,13 @@ public class NettyHandler extends SimpleChannelHandler {
 
     private final URL url;
 
-    private final ChannelHandler handler;
+    private final ChannelHandler handler;// 事件处理器
 
+    /*
+    * 创建溯源：
+    * server端：创建Exporter暴露服务时，从DubboProtocol.openServer开始追溯，url是provider侧的服务标识符，如dubbo://...，handler是DubboProtocol.requestHandler
+    *
+    * */
     public NettyHandler(URL url, ChannelHandler handler) {
         if (url == null) {
             throw new IllegalArgumentException("url == null");
@@ -95,11 +100,18 @@ public class NettyHandler extends SimpleChannelHandler {
         }
     }
 
+    /*
+    * 从netty信道收到请求后的处理逻辑
+    * 什么时候会调用这个方法？
+    * 此方法定义在SimpleChannelHandler中，这个类属于netty，是netty框架开发给用户用于定义：收到请求之后如何处理请求
+    *
+    * 重点：NettyHandler是所有service共用的，无论client请求哪个service
+    * */
     @Override
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-        NettyChannel channel = NettyChannel.getOrAddChannel(ctx.getChannel(), url, handler);
+    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {// 请求被反序列化后，会首先进入此方法处理
+        NettyChannel channel = NettyChannel.getOrAddChannel(ctx.getChannel(), url, handler);// 获取或者创建NettyChannel对象
         try {
-            handler.received(channel, e.getMessage());
+            handler.received(channel, e.getMessage());// 调用handler进行处理 - 忽略中间的垃圾代码，直接进入AllChannelHandler
         } finally {
             NettyChannel.removeChannelIfDisconnected(ctx.getChannel());
         }

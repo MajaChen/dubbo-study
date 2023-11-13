@@ -54,10 +54,10 @@ public class ChannelEventRunnable implements Runnable {
     }
 
     @Override
-    public void run() {
+    public void run() {// 各种事件直接投入线程池运行
         InternalThreadLocalMap internalThreadLocalMap = InternalThreadLocalMap.getAndRemove();
         try {
-            if (state == ChannelState.RECEIVED) {
+            if (state == ChannelState.RECEIVED) {// 接受事件
                 try {
                     handler.received(channel, message);
                 } catch (Exception e) {
@@ -66,21 +66,21 @@ public class ChannelEventRunnable implements Runnable {
                 }
             } else {
                 switch (state) {
-                    case CONNECTED:
+                    case CONNECTED:// 连接事件
                         try {
                             handler.connected(channel);
                         } catch (Exception e) {
                             logger.warn(INTERNAL_ERROR, "unknown error in remoting module", "", "ChannelEventRunnable handle " + state + " operation error, channel is " + channel, e);
                         }
                         break;
-                    case DISCONNECTED:
+                    case DISCONNECTED:// 断开连接事件
                         try {
                             handler.disconnected(channel);
                         } catch (Exception e) {
                             logger.warn(INTERNAL_ERROR, "unknown error in remoting module", "", "ChannelEventRunnable handle " + state + " operation error, channel is " + channel, e);
                         }
                         break;
-                    case SENT:
+                    case SENT:// 发送事件
                         try {
                             handler.sent(channel, message);
                         } catch (Exception e) {
@@ -88,7 +88,7 @@ public class ChannelEventRunnable implements Runnable {
                                 + ", message is " + message, e);
                         }
                         break;
-                    case CAUGHT:
+                    case CAUGHT:// 异常抛出事件
                         try {
                             handler.caught(channel, exception);
                         } catch (Exception e) {

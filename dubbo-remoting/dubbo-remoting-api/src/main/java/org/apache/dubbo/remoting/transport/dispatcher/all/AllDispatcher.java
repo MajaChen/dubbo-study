@@ -23,7 +23,7 @@ import org.apache.dubbo.remoting.Dispatcher;
 /**
  * default thread pool configure
  */
-public class AllDispatcher implements Dispatcher {
+public class AllDispatcher implements Dispatcher {// all策略的事件派发器
 
     public static final String NAME = "all";
 

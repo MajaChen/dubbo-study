@@ -26,7 +26,7 @@ import org.apache.dubbo.remoting.transport.dispatcher.all.AllDispatcher;
  * ChannelHandlerWrapper (SPI, Singleton, ThreadSafe)
  */
 @SPI(value = AllDispatcher.NAME, scope = ExtensionScope.FRAMEWORK)
-public interface Dispatcher {
+public interface Dispatcher {// 事件派发器，对传入的handler进行包装，包装后的handler按照指定的策略将任务投入线程池或者直接执行（IO线程）；通过自适应扩展技术确定派发策略
 
     /**
      * dispatch the message to threadpool.

@@ -72,7 +72,7 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
         }
 
         try {
-            // connect.
+            // 与远程主机建立连接
             connect();
             if (logger.isInfoEnabled()) {
                 logger.info("Start " + getClass().getSimpleName() + " " + NetUtils.getLocalAddress() + " connect to the server " + getRemoteAddress());
@@ -189,19 +189,19 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
     }
 
     @Override
-    public void send(Object message, boolean sent) throws RemotingException {
+    public void send(Object message, boolean sent) throws RemotingException {// 发送请求
         if (needReconnect && !isConnected()) {
             connect();
         }
-        Channel channel = getChannel();
+        Channel channel = getChannel();// 获取NettyChannel，直接跳转到NettyClient
         //TODO Can the value returned by getChannel() be null? need improvement.
         if (channel == null || !channel.isConnected()) {
             throw new RemotingException(this, "message can not send, because channel is closed . url:" + getUrl());
         }
-        channel.send(message, sent);
+        channel.send(message, sent);// 再次委托给NettyChannel
     }
 
-    protected void connect() throws RemotingException {
+    protected void connect() throws RemotingException {// 正式建立连接
         connectLock.lock();
 
         try {

@@ -51,7 +51,7 @@ public class Exchangers {
         return bind(URL.valueOf(url), handler);
     }
 
-    public static ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingException {// 创建ExchangeServer，绑定url和handler
+    public static ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingException {// 创建ExchangeServer
         if (url == null) {
             throw new IllegalArgumentException("url == null");
         }
@@ -59,6 +59,8 @@ public class Exchangers {
             throw new IllegalArgumentException("handler == null");
         }
         url = url.addParameterIfAbsent(Constants.CODEC_KEY, "exchange");
+        // 首先创建Exchanger（它是可复用的），由Exchanger通过绑定handler和server创建ExchangerServer
+        // 绑定的时候使用了自适应扩展技术，默认是HeaderExchanger（其他Exchanger不用考虑），直接下钻HeaderExchanger.bind
         return getExchanger(url).bind(url, handler);
     }
 
@@ -90,7 +92,7 @@ public class Exchangers {
         return connect(URL.valueOf(url), handler);
     }
 
-    public static ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {// 基于url和handler创建ExchangeClient
+    public static ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {// 创建ExchangeClient
         if (url == null) {
             throw new IllegalArgumentException("url == null");
         }

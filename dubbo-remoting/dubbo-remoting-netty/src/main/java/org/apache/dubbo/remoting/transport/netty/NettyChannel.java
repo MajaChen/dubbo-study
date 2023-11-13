@@ -37,6 +37,10 @@ import static org.apache.dubbo.common.constants.LoggerCodeConstants.TRANSPORT_FA
 
 /**
  * NettyChannel.
+ *
+ * NettyChannel的定位是：封装1. netty原生的channel 2. url 3. ChannelHandler
+ * ChannelHandler的定位是：对netty信道上发生的各种事件做出响应（DubboProtocol中openServer方法创建的就是他的对象）
+ * NettyChannel的定位是：集成netty原生的SimpleChannelHandler，与netty框架进行集成
  */
 final class NettyChannel extends AbstractChannel {
 
@@ -60,7 +64,7 @@ final class NettyChannel extends AbstractChannel {
         if (ch == null) {
             return null;
         }
-        NettyChannel ret = CHANNEL_MAP.get(ch);
+        NettyChannel ret = CHANNEL_MAP.get(ch);// 返回NettyChannel
         if (ret == null) {
             NettyChannel nc = new NettyChannel(ch, url, handler);
             if (ch.isConnected()) {
@@ -95,13 +99,13 @@ final class NettyChannel extends AbstractChannel {
     }
 
     @Override
-    public void send(Object message, boolean sent) throws RemotingException {
+    public void send(Object message, boolean sent) throws RemotingException {// 发送请求
         super.send(message, sent);
 
         boolean success = true;
         int timeout = 0;
         try {
-            ChannelFuture future = channel.write(message);
+            ChannelFuture future = channel.write(message);// 调用Netty原生的Channel发送请求，它在NettyClient.doConnect设置
             if (sent) {
                 timeout = getUrl().getPositiveParameter(TIMEOUT_KEY, DEFAULT_TIMEOUT);
                 success = future.await(timeout);

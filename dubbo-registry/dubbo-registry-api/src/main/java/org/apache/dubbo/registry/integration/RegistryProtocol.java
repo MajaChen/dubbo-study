@@ -526,7 +526,7 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {// type是接口类
+    public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {// 创建invoker，type是接口类
         url = getRegistryUrl(url);
         Registry registry = getRegistry(url);
         if (RegistryService.class.equals(type)) {

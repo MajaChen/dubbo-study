@@ -36,6 +36,11 @@ public class DecodeHandler extends AbstractChannelHandlerDelegate {
         super(handler);
     }
 
+   /*
+   * 对message进行解码，那么这里的解码跟netty框架收到byte流时的的解码有什么区别？
+   * netty框架对byte流的解码更底层，将byte流转化成具体的对象
+   * 此处的解码是在具体对象的基础上，增加一些业务解码的逻辑
+   * */
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
         if (message instanceof Decodeable) {

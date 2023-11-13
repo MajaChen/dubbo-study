@@ -85,9 +85,9 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
         }
     }
 
-    void handleRequest(final ExchangeChannel channel, Request req) throws RemotingException {
+    void handleRequest(final ExchangeChannel channel, Request req) throws RemotingException {// 处理请求、返回结果
         Response res = new Response(req.getId(), req.getVersion());
-        if (req.isBroken()) {
+        if (req.isBroken()) {// 坏请求
             Object data = req.getData();
 
             String msg;
@@ -107,8 +107,8 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
         // find handler by message class.
         Object msg = req.getData();
         try {
-            CompletionStage<Object> future = handler.reply(channel, msg);
-            future.whenComplete((appResult, t) -> {
+            CompletionStage<Object> future = handler.reply(channel, msg);// 调用handler.reply方法，对应DubboProtocol匿名内部类的reply方法
+            future.whenComplete((appResult, t) -> {// 等请求完成之后把响应结果发送回去
                 try {
                     if (t == null) {
                         res.setStatus(Response.OK);
@@ -188,17 +188,17 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
     }
 
     @Override
-    public void received(Channel channel, Object message) throws RemotingException {
-        final ExchangeChannel exchangeChannel = HeaderExchangeChannel.getOrAddChannel(channel);
+    public void received(Channel channel, Object message) throws RemotingException {// 处理请求，返回结果
+        final ExchangeChannel exchangeChannel = HeaderExchangeChannel.getOrAddChannel(channel);// 此处的channel只起到一个通信的作用
         if (message instanceof Request) {
             // handle request.
             Request request = (Request) message;
             if (request.isEvent()) {
                 handlerEvent(channel, request);
             } else {
-                if (request.isTwoWay()) {
+                if (request.isTwoWay()) {// 双向通信，处理请求并返回响应
                     handleRequest(exchangeChannel, request);
-                } else {
+                } else {// 单向通信，只处理请求
                     handler.received(exchangeChannel, request.getData());
                 }
             }
