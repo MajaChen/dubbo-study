@@ -188,16 +188,16 @@ public class DefaultFuture extends CompletableFuture<Object> {
         received(channel, response, false);
     }
 
-    public static void received(Channel channel, Response response, boolean timeout) {
+    public static void received(Channel channel, Response response, boolean timeout) {// 收到响应结果
         try {
-            DefaultFuture future = FUTURES.remove(response.getId());
+            DefaultFuture future = FUTURES.remove(response.getId());// 根据response中的id获取DefaultFuture
             if (future != null) {
                 Timeout t = future.timeoutCheckTask;
                 if (!timeout) {
                     // decrease Time
                     t.cancel();
                 }
-                future.doReceived(response);
+                future.doReceived(response);// 设置响应结果
                 shutdownExecutorIfNeeded(future);
             } else {
                 logger.warn(PROTOCOL_TIMEOUT_SERVER, "", "", "The timeout response finally returned at "
@@ -235,12 +235,12 @@ public class DefaultFuture extends CompletableFuture<Object> {
         this.cancel(true);
     }
 
-    private void doReceived(Response res) {
+    private void doReceived(Response res) {// 设置响应结果
         if (res == null) {
             throw new IllegalStateException("response cannot be null");
         }
         if (res.getStatus() == Response.OK) {
-            this.complete(res.getResult());
+            this.complete(res.getResult());// 将future设成已完成状态
         } else if (res.getStatus() == Response.CLIENT_TIMEOUT || res.getStatus() == Response.SERVER_TIMEOUT) {
             this.completeExceptionally(new TimeoutException(res.getStatus() == Response.SERVER_TIMEOUT, channel, res.getErrorMessage()));
         } else if(res.getStatus() == Response.SERIALIZATION_ERROR){

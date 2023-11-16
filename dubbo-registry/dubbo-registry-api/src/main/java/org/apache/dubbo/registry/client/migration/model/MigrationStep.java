@@ -16,7 +16,7 @@
  */
 package org.apache.dubbo.registry.client.migration.model;
 
-public enum MigrationStep {
+public enum MigrationStep {// 三种invoker类型？？？
     FORCE_INTERFACE,
     APPLICATION_FIRST,
     FORCE_APPLICATION

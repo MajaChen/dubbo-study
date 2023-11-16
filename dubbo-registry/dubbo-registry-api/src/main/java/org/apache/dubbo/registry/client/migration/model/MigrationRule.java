@@ -77,7 +77,7 @@ import static org.apache.dubbo.registry.client.migration.MigrationRuleHandler.DU
  *    force: false
  *    step: FORCE_INTERFACE
  */
-public class MigrationRule {
+public class MigrationRule {// invoker类型间的迁移规则？
 
     private String key;
     private MigrationStep step;

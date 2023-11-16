@@ -121,7 +121,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
     }
 
     @Override
-    public void subscribe(URL url) {
+    public void subscribe(URL url) {// 订阅注册中心的数据 - 在哪调用？
 
         // Fail-fast detection protocol spi
         String queryProtocols = this.queryMap.get(PROTOCOL_KEY);
@@ -176,7 +176,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
     }
 
     @Override
-    public synchronized void notify(List<URL> urls) {
+    public synchronized void notify(List<URL> urls) {// 收到注册中心的通知后更新本地的invoker列表
         if (isDestroyed()) {
             return;
         }
@@ -206,7 +206,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
                 providerURLs = addressListener.notify(providerURLs, getConsumerUrl(), this);
             }
         }
-        refreshOverrideAndInvoker(providerURLs);
+        refreshOverrideAndInvoker(providerURLs);// 更新invokers
     }
 
     @Override
@@ -230,7 +230,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
     protected synchronized void refreshOverrideAndInvoker(List<URL> urls) {
         // mock zookeeper://xxx?mock=return null
         this.directoryUrl = overrideWithConfigurator(getOriginalConsumerUrl());
-        refreshInvoker(urls);
+        refreshInvoker(urls);// 更新invokers
     }
 
     /**
@@ -245,9 +245,10 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
      *
      * @param invokerUrls this parameter can't be null
      */
-    private void refreshInvoker(List<URL> invokerUrls) {
+    private void refreshInvoker(List<URL> invokerUrls) {// 刷新invokers，将url转成invoker
         Assert.notNull(invokerUrls, "invokerUrls should not be null");
 
+        // 表示禁用所有服务
         if (invokerUrls.size() == 1
             && invokerUrls.get(0) != null
             && EMPTY_PROTOCOL.equals(invokerUrls.get(0).getProtocol())) {
@@ -274,7 +275,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
             } else {
                 localCachedInvokerUrls = new HashSet<>();
                 localCachedInvokerUrls.addAll(invokerUrls);//Cached invoker urls, convenient for comparison
-                this.cachedInvokerUrls = localCachedInvokerUrls;
+                this.cachedInvokerUrls = localCachedInvokerUrls;// 置换cachedInvokerUrls
             }
             if (invokerUrls.isEmpty()) {
                 return;
@@ -289,6 +290,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
                 oldUrlInvokerMap = new LinkedHashMap<>(Math.round(1 + localUrlInvokerMap.size() / DEFAULT_HASHMAP_LOAD_FACTOR));
                 localUrlInvokerMap.forEach(oldUrlInvokerMap::put);
             }
+            // 将url是转成invoker，旧的invoker主要是作为参照
             Map<URL, Invoker<T>> newUrlInvokerMap = toInvokers(oldUrlInvokerMap, invokerUrls);// Translate url list to Invoker map
 
             /*
@@ -313,11 +315,11 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
                 return;
             }
 
-            List<Invoker<T>> newInvokers = Collections.unmodifiableList(new ArrayList<>(newUrlInvokerMap.values()));
-            BitList<Invoker<T>> finalInvokers = multiGroup ? new BitList<>(toMergeInvokerList(newInvokers)) : new BitList<>(newInvokers);
+            List<Invoker<T>> newInvokers = Collections.unmodifiableList(new ArrayList<>(newUrlInvokerMap.values()));// 生成不可变的invokers列表
+            BitList<Invoker<T>> finalInvokers = multiGroup ? new BitList<>(toMergeInvokerList(newInvokers)) : new BitList<>(newInvokers);// multi group支持
             // pre-route and build cache
-            refreshRouter(finalInvokers.clone(), () -> this.setInvokers(finalInvokers));
-            this.urlInvokerMap = newUrlInvokerMap;
+            refreshRouter(finalInvokers.clone(), () -> this.setInvokers(finalInvokers));// 刷新router
+            this.urlInvokerMap = newUrlInvokerMap;// 更新urlInvokerMap本地变量  -- 用处何在？
 
             try {
                 destroyUnusedInvokers(oldUrlInvokerMap, newUrlInvokerMap); // Close the unused Invoker
@@ -408,17 +410,19 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
         }
         String queryProtocols = this.queryMap.get(PROTOCOL_KEY);
         for (URL providerUrl : urls) {
+            // 检查provider的protocol是否被consumer所支持
             if (!checkProtocolValid(queryProtocols, providerUrl)) {
                 continue;
             }
 
+            // 根据配置项修改providerUrl
             URL url = mergeUrl(providerUrl);
 
             // Cache key is url that does not merge with consumer side parameters,
             // regardless of how the consumer combines parameters,
             // if the server url changes, then refer again
             Invoker<T> invoker = oldUrlInvokerMap == null ? null : oldUrlInvokerMap.remove(url);
-            if (invoker == null) { // Not in the cache, refer again
+            if (invoker == null) { // invoker不在缓存内则重新构建
                 try {
                     boolean enabled = true;
                     if (url.hasParameter(DISABLED_KEY)) {
@@ -427,7 +431,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
                         enabled = url.getParameter(ENABLED_KEY, true);
                     }
                     if (enabled) {
-                        invoker = protocol.refer(serviceType, url);
+                        invoker = protocol.refer(serviceType, url);// 这个refer走的是Dubbo或其他网络传输协议而不是注册协议
                     }
                 } catch (Throwable t) {
 
@@ -446,7 +450,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
                 if (invoker != null) { // Put new invoker in cache
                     newUrlInvokerMap.put(url, invoker);
                 }
-            } else {
+            } else {// 否则直接使用现有的invoker，并将其从旧map中移除
                 newUrlInvokerMap.put(url, invoker);
             }
         }

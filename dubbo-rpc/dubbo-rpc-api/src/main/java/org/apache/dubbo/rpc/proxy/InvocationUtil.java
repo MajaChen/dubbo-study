@@ -47,6 +47,7 @@ public class InvocationUtil {
             // invoker.getUrl() returns consumer url.
             RpcServiceContext.getServiceContext().setConsumerUrl(url);
 
+            // 开启Profiler性能分析
             if (ProfilerSwitch.isEnableSimpleProfiler()) {
                 ProfilerEntry parentProfiler = Profiler.getBizProfiler();
                 ProfilerEntry bizProfiler;
@@ -87,7 +88,7 @@ public class InvocationUtil {
                     }
                 }
             }
-            return invoker.invoke(rpcInvocation).recreate();
+            return invoker.invoke(rpcInvocation).recreate();// 最终调用传入的invoker并将rpcInvocation作为入参
         } finally {
             RpcContext.restoreServiceContext(originServiceContext);
         }

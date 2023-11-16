@@ -60,9 +60,9 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
         this.handler = handler;
     }
 
-    static void handleResponse(Channel channel, Response response) throws RemotingException {
+    static void handleResponse(Channel channel, Response response) throws RemotingException {// 处理响应
         if (response != null && !response.isHeartbeat()) {
-            DefaultFuture.received(channel, response);
+            DefaultFuture.received(channel, response);// 继续向下调用
         }
     }
 
@@ -188,9 +188,9 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
     }
 
     @Override
-    public void received(Channel channel, Object message) throws RemotingException {// 处理请求，返回结果
+    public void received(Channel channel, Object message) throws RemotingException {// 收到消息
         final ExchangeChannel exchangeChannel = HeaderExchangeChannel.getOrAddChannel(channel);// 此处的channel只起到一个通信的作用
-        if (message instanceof Request) {
+        if (message instanceof Request) {// 收到请求
             // handle request.
             Request request = (Request) message;
             if (request.isEvent()) {
@@ -202,7 +202,7 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
                     handler.received(exchangeChannel, request.getData());
                 }
             }
-        } else if (message instanceof Response) {
+        } else if (message instanceof Response) {// 收到响应
             handleResponse(channel, (Response) message);
         } else if (message instanceof String) {
             if (isClientSide(channel)) {

@@ -40,7 +40,7 @@ public class InvokerInvocationHandler implements InvocationHandler {
 
     private final String protocolServiceKey;
 
-    public InvokerInvocationHandler(Invoker<?> handler) {
+    public InvokerInvocationHandler(Invoker<?> handler) {// 传入的invoker可能是一个ClusterInvoker对象，要追溯到RegistryProtocol.refer方法和Cluster.join方法
         this.invoker = handler;
         URL url = invoker.getUrl();
         this.protocolServiceKey = url.getProtocolServiceKey();
@@ -70,6 +70,7 @@ public class InvokerInvocationHandler implements InvocationHandler {
         }
         /*
         * 一般方法走远程调用，这是核心
+        * 主要逻辑是封装RpcInvocation远程调用对象，然后基于InvocationUtil发起调用
         * */
         RpcInvocation rpcInvocation = new RpcInvocation(serviceModel, method.getName(), invoker.getInterface().getName(), protocolServiceKey, method.getParameterTypes(), args);
 
@@ -77,7 +78,7 @@ public class InvokerInvocationHandler implements InvocationHandler {
             rpcInvocation.put(Constants.CONSUMER_MODEL, serviceModel);
             rpcInvocation.put(Constants.METHOD_MODEL, ((ConsumerModel) serviceModel).getMethodModel(method));
         }
-        // 正式发起远程调用
+        // 正式发起远程调用，
         return InvocationUtil.invoke(invoker, rpcInvocation);
     }
 }

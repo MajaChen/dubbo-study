@@ -30,7 +30,7 @@ import org.apache.dubbo.rpc.cluster.ClusterInvoker;
 
 import java.util.concurrent.CountDownLatch;
 
-public class ServiceDiscoveryMigrationInvoker<T> extends MigrationInvoker<T> {
+public class ServiceDiscoveryMigrationInvoker<T> extends MigrationInvoker<T> {// 在migration的基础上增加service discovery功能
     private static final ErrorTypeAwareLogger logger = LoggerFactory.getErrorTypeAwareLogger(ServiceDiscoveryMigrationInvoker.class);
 
     public ServiceDiscoveryMigrationInvoker(RegistryProtocol registryProtocol, Cluster cluster, Registry registry, Class<T> type, URL url, URL consumerUrl) {
@@ -60,11 +60,15 @@ public class ServiceDiscoveryMigrationInvoker<T> extends MigrationInvoker<T> {
     }
 
     @Override
-    public Result invoke(Invocation invocation) throws RpcException {
-        ClusterInvoker<T> invoker = getServiceDiscoveryInvoker();
+    public Result invoke(Invocation invocation) throws RpcException {// invoke方法
+        ClusterInvoker<T> invoker = getServiceDiscoveryInvoker();// 选定一个invoker
         if (invoker == null) {
             throw new IllegalStateException("There's no service discovery invoker available for service " + invocation.getServiceName());
         }
+        /**
+        * 注意区分InvocationUtil:invoker.invoke(rpcInvocation)，那是在外层，这是在内层
+         * 最终依托选定的invoker执行invoke其方法
+        * */
         return invoker.invoke(invocation);
     }
 }

@@ -115,6 +115,9 @@ public class WrappedChannelHandler implements ChannelHandlerDelegate {
      *
      * @param msg
      * @return
+     *
+     * 根据消息类型获取线程池,如果是response表示收到了响应,根据response中的id来获取DefaultFuture,再根据DefaultFuture获取线程池
+     * 如果是request表示要发送请求则获取共享连接
      */
     public ExecutorService getPreferredExecutorService(Object msg) {
         if (msg instanceof Response) {

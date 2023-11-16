@@ -38,7 +38,7 @@ import static org.apache.dubbo.common.constants.RegistryConstants.REGISTRY_KEY;
 /**
  * StaticDirectory
  */
-public class StaticDirectory<T> extends AbstractDirectory<T> {
+public class StaticDirectory<T> extends AbstractDirectory<T> {// invokers不变 RouterChain指定了路由规则
     private static final ErrorTypeAwareLogger logger = LoggerFactory.getErrorTypeAwareLogger(StaticDirectory.class);
     private final Class<T> interfaceClass;
 
@@ -116,17 +116,17 @@ public class StaticDirectory<T> extends AbstractDirectory<T> {
     }
 
     @Override
-    protected List<Invoker<T>> doList(SingleRouterChain<T> singleRouterChain, BitList<Invoker<T>> invokers, Invocation invocation) throws RpcException {
+    protected List<Invoker<T>> doList(SingleRouterChain<T> singleRouterChain, BitList<Invoker<T>> invokers, Invocation invocation) throws RpcException {// 获取invokers列表
         if (singleRouterChain != null) {
             try {
-                List<Invoker<T>> finalInvokers = singleRouterChain.route(getConsumerUrl(), invokers, invocation);
+                List<Invoker<T>> finalInvokers = singleRouterChain.route(getConsumerUrl(), invokers, invocation);// 先根据路由规则筛选invokers
                 return finalInvokers == null ? BitList.emptyList() : finalInvokers;
             } catch (Throwable t) {
                 logger.error(CLUSTER_FAILED_SITE_SELECTION, "Failed to execute router", "", "Failed to execute router: " + getUrl() + ", cause: " + t.getMessage(), t);
                 return BitList.emptyList();
             }
         }
-        return invokers;
+        return invokers;// 全量返回
     }
 
     @Override

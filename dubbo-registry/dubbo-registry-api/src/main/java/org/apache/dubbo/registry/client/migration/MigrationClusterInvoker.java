@@ -26,7 +26,7 @@ import org.apache.dubbo.rpc.cluster.ClusterInvoker;
  *
  * @param <T>
  */
-public interface MigrationClusterInvoker<T> extends ClusterInvoker<T> {
+public interface MigrationClusterInvoker<T> extends ClusterInvoker<T> {// ClusterInvoker封装了多个invoker， 但是对外表现成一个invoker
 
     @Override
     boolean isServiceDiscovery();
@@ -39,11 +39,11 @@ public interface MigrationClusterInvoker<T> extends ClusterInvoker<T> {
 
     void setMigrationRule(MigrationRule rule);
 
-    boolean migrateToForceInterfaceInvoker(MigrationRule newRule);
+    boolean migrateToForceInterfaceInvoker(MigrationRule newRule);// 迁移成ForceInterfaceInvoker
 
-    boolean migrateToForceApplicationInvoker(MigrationRule newRule);
+    boolean migrateToForceApplicationInvoker(MigrationRule newRule);// 迁移成ForceApplicationInvoker
 
-    void migrateToApplicationFirstInvoker(MigrationRule newRule);
+    void migrateToApplicationFirstInvoker(MigrationRule newRule);// 迁移成ApplicationFirstInvoker
 
     void reRefer(URL newSubscribeUrl);
 }

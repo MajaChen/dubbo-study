@@ -39,9 +39,10 @@ public class HeaderExchanger implements Exchanger {// Exchanger的定位是Excha
 
     @Override
     public ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {
-        /*
-        * 创建Client对象，Client是最底层的完成网络通信的客户端，在此基础上创建HeaderExchangeClient
-        * ExchangeClient封装了Client
+        /**
+        * 创建Client对象，在此基础上创建HeaderExchangeClient
+        * 对传递进来的ExchangeHandlerAdapter，先包了一层HeaderExchangeHandler，再包了一层DecodeHandler
+         * 所以请求的处理顺序是DecodeHandler -> HeaderExchangeHandler -> handler
         * */
         return new HeaderExchangeClient(Transporters.connect(url, new DecodeHandler(new HeaderExchangeHandler(handler))), true);
     }
@@ -56,6 +57,7 @@ public class HeaderExchanger implements Exchanger {// Exchanger的定位是Excha
             /**
              * 再包了一层，内层是Transporter，外层是ExchangeServer
              * 对传递进来的ExchangeHandlerAdapter，先包了一层HeaderExchangeHandler，再包了一层DecodeHandler
+             * 所以请求的处理顺序是DecodeHandler -> HeaderExchangeHandler -> handler
              */
             server = new HeaderExchangeServer(Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
         }

@@ -57,7 +57,7 @@ public class ChannelEventRunnable implements Runnable {
     public void run() {// 各种事件直接投入线程池运行
         InternalThreadLocalMap internalThreadLocalMap = InternalThreadLocalMap.getAndRemove();
         try {
-            if (state == ChannelState.RECEIVED) {// 接受事件
+            if (state == ChannelState.RECEIVED) {// 接受事件,直接丢给注册好的handler层层执行
                 try {
                     handler.received(channel, message);
                 } catch (Exception e) {

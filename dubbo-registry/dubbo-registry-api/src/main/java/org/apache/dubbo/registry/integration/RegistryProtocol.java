@@ -542,7 +542,7 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
             }
         }
 
-        Cluster cluster = Cluster.getCluster(url.getScopeModel(), qs.get(CLUSTER_KEY));// 利用自适应扩展技术加载cluster，一般是default
+        Cluster cluster = Cluster.getCluster(url.getScopeModel(), qs.get(CLUSTER_KEY));// 利用自适应扩展技术加载cluster，不传的话是failover
         return doRefer(cluster, registry, type, url, qs);
     }
 
@@ -560,8 +560,8 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
             consumerAttribute
         );
         url = url.putAttribute(CONSUMER_URL_KEY, consumerUrl); // cosumerUrl:consumer://192.168.124.11/org.apache.dubbo.samples.api.GreetingsService?application=first-dubbo-consumer&background=false&dubbo=2.0.2&executor-management-mode=isolation&file-cache=true&interface=org.apache.dubbo.samples.api.GreetingsService&methods=sayHello,sayHi&pid=12364&qos.port=22222&register.ip=192.168.124.11&release=3.2.8-SNAPSHOT&side=consumer&sticky=false&timestamp=1699664658879&unloadClusterRelated=false
-        ClusterInvoker<T> migrationInvoker = getMigrationInvoker(this, cluster, registry, type, url, consumerUrl);// 返回一个ServiceDiscoveryMigrationInvoker实例
-        return interceptInvoker(migrationInvoker, url, consumerUrl);// 对原有invoker进行封装，最终会调用到getInvoker方法
+        ClusterInvoker<T> migrationInvoker = getMigrationInvoker(this, cluster, registry, type, url, consumerUrl);// 返回一个ServiceDiscoveryMigrationInvoker实例，cluster是failover
+        return interceptInvoker(migrationInvoker, url, consumerUrl);// 对原有invoker进行intercept，添加集群功能，最终会调用到getInvoker方法，问题是这里已经有了migrationInvoker
     }
 
     private String getPath(Map<String, String> parameters, Class<?> type) {
@@ -591,7 +591,7 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
         }
 
         for (RegistryProtocolListener listener : listeners) {
-            listener.onRefer(this, invoker, consumerUrl, url);// MigrationRuleListener
+            listener.onRefer(this, invoker, consumerUrl, url);// 对传入的ServiceDiscoveryMigrationInvoker进行intercept
         }
         return invoker;
     }

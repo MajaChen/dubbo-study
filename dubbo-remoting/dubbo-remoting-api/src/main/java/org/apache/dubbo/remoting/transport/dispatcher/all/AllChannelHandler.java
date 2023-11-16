@@ -36,7 +36,7 @@ public class AllChannelHandler extends WrappedChannelHandler {
     }
 
     @Override
-    public void connected(Channel channel) throws RemotingException {
+    public void connected(Channel channel) throws RemotingException {// 网络连接事件
         ExecutorService executor = getSharedExecutorService();
         try {
             executor.execute(new ChannelEventRunnable(channel, handler, ChannelState.CONNECTED));
@@ -46,7 +46,7 @@ public class AllChannelHandler extends WrappedChannelHandler {
     }
 
     @Override
-    public void disconnected(Channel channel) throws RemotingException {
+    public void disconnected(Channel channel) throws RemotingException {// 网络断开事件
         ExecutorService executor = getSharedExecutorService();
         try {
             executor.execute(new ChannelEventRunnable(channel, handler, ChannelState.DISCONNECTED));
@@ -56,10 +56,15 @@ public class AllChannelHandler extends WrappedChannelHandler {
     }
 
     @Override
-    public void received(Channel channel, Object message) throws RemotingException {// 事件派发
+    public void received(Channel channel, Object message) throws RemotingException {// 收到网络消息事件
         ExecutorService executor = getPreferredExecutorService(message);// 获取业务executor
         try {
-            executor.execute(new ChannelEventRunnable(channel, handler, ChannelState.RECEIVED, message));// 将消息封装成runnable投入业务线程池
+            /*
+            * 将消息封装成runnable投入线程池
+            * 要么是服务端配置的业务线程池
+            * 要么是客户端的共享线程池
+            * */
+            executor.execute(new ChannelEventRunnable(channel, handler, ChannelState.RECEIVED, message));
         } catch (Throwable t) {
             if(message instanceof Request && t instanceof RejectedExecutionException){
                 sendFeedback(channel, (Request) message, t);
@@ -70,7 +75,7 @@ public class AllChannelHandler extends WrappedChannelHandler {
     }
 
     @Override
-    public void caught(Channel channel, Throwable exception) throws RemotingException {
+    public void caught(Channel channel, Throwable exception) throws RemotingException {// 网络错误事件
         ExecutorService executor = getSharedExecutorService();
         try {
             executor.execute(new ChannelEventRunnable(channel, handler, ChannelState.CAUGHT, exception));

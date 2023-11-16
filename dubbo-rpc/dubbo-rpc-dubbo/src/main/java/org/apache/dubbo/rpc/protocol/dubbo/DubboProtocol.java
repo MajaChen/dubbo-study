@@ -115,7 +115,7 @@ public class DubboProtocol extends AbstractProtocol {
         requestHandler = new ExchangeHandlerAdapter(frameworkModel) {// requestHandler在初始化方法中完成创建，在consumer侧和provider侧共用
 
             @Override
-            public CompletableFuture<Object> reply(ExchangeChannel channel, Object message) throws RemotingException {
+            public CompletableFuture<Object> reply(ExchangeChannel channel, Object message) throws RemotingException {// 处理请求
 
                 if (!(message instanceof Invocation)) {
                     throw new RemotingException(channel, "Unsupported request: "
@@ -158,11 +158,10 @@ public class DubboProtocol extends AbstractProtocol {
             }
 
             @Override
-            public void received(Channel channel, Object message) throws RemotingException {
-                if (message instanceof Invocation) {
+            public void received(Channel channel, Object message) throws RemotingException {// 接收消息
+                if (message instanceof Invocation) {// 如果是invocation类型则调reply
                     reply((ExchangeChannel) channel, message);
-
-                } else {
+                } else {// 否则调父类的received方法
                     super.received(channel, message);
                 }
             }
