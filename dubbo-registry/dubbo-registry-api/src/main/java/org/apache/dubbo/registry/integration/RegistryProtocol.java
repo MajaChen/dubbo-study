@@ -591,7 +591,7 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
         }
 
         for (RegistryProtocolListener listener : listeners) {
-            listener.onRefer(this, invoker, consumerUrl, url);// 对传入的ServiceDiscoveryMigrationInvoker进行intercept
+            listener.onRefer(this, invoker, consumerUrl, url);// 对传入的ServiceDiscoveryMigrationInvoker进行intercept，问题是有哪些listener?
         }
         return invoker;
     }
@@ -601,13 +601,13 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
         return doCreateInvoker(directory, cluster, registry, type);
     }
 
-    public <T> ClusterInvoker<T> getInvoker(Cluster cluster, Registry registry, Class<T> type, URL url) {// 创建consumer侧的invoker，对应registry协议
+    public <T> ClusterInvoker<T> getInvoker(Cluster cluster, Registry registry, Class<T> type, URL url) {// 创建consumer侧的invoker，带集群功能，对应registry协议
         // FIXME, this method is currently not used, create the right registry before enable.
         DynamicDirectory<T> directory = new RegistryDirectory<>(type, url);// 用的是RegistryDirectory，走远程注册中心
         return doCreateInvoker(directory, cluster, registry, type);
     }
 
-    protected <T> ClusterInvoker<T> doCreateInvoker(DynamicDirectory<T> directory, Cluster cluster, Registry registry, Class<T> type) {// 创建实际的consumer侧invoker
+    protected <T> ClusterInvoker<T> doCreateInvoker(DynamicDirectory<T> directory, Cluster cluster, Registry registry, Class<T> type) {// 创建实际的consumer侧invoker，带集群功能
         directory.setRegistry(registry);
         directory.setProtocol(protocol);
         // all attributes of REFER_KEY
@@ -627,8 +627,8 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
         }
         directory.buildRouterChain(urlToRegistry);// 请求路由
         directory.subscribe(toSubscribeUrl(urlToRegistry));// 订阅注册中心providers,configurators,routers三类节点
-
-        return (ClusterInvoker<T>) cluster.join(directory, true);// 利用集群功能生成invoker
+        // 上面并没有直接创建invoker，而只是创建了一个directory，真正创建invoker的动作在RegistryDirectory.notify方法里
+        return (ClusterInvoker<T>) cluster.join(directory, true);// 利用集群功能生成invoker，这里的集群是failover集群
     }
 
     public <T> void reRefer(ClusterInvoker<?> invoker, URL newSubscribeUrl) {

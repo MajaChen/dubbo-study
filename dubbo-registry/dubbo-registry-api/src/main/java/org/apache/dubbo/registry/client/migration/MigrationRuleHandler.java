@@ -41,6 +41,7 @@ public class MigrationRuleHandler<T> {
     }
 
     public synchronized void doMigrate(MigrationRule rule) {
+        // 如果是ServiceDiscoveryMigrationInvoker类型直接refresh
         if (migrationInvoker instanceof ServiceDiscoveryMigrationInvoker) {
             refreshInvoker(MigrationStep.FORCE_APPLICATION, 1.0f, rule);
             return;

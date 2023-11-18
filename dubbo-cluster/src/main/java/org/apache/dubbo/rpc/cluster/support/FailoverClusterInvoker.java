@@ -55,7 +55,7 @@ public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public Result doInvoke(Invocation invocation, final List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
+    public Result doInvoke(Invocation invocation, final List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {// 发起远程调用，cluster封装了directory，使多个invoker从外部视角来看就像一个invoker
         List<Invoker<T>> copyInvokers = invokers;
         String methodName = RpcUtils.getMethodName(invocation);
         int len = calculateInvokeTimes(methodName);

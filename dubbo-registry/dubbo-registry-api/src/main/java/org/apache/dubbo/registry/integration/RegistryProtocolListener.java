@@ -28,7 +28,7 @@ import static org.apache.dubbo.common.extension.ExtensionScope.MODULE;
  * of RegistryProtocol. For example: re-export or re-refer on the fly when certain condition meets.
  */
 @SPI(scope = MODULE)
-public interface RegistryProtocolListener {
+public interface RegistryProtocolListener {// RegistryProtocolListener是dubbo提供提供的一个扩展点，允许用户在创建Invoker或者Exporter的时候对其进行修改
     /**
      * Notify RegistryProtocol's listeners when a service is registered
      *
