@@ -88,7 +88,7 @@ public class InvocationUtil {
                     }
                 }
             }
-            return invoker.invoke(rpcInvocation).recreate();// 最终调用传入的invoker并将rpcInvocation作为入参
+            return invoker.invoke(rpcInvocation).recreate();// 最终调用传入的invoker并将rpcInvocation作为入参，这里的invoker类型是FailoverClusterInvoker
         } finally {
             RpcContext.restoreServiceContext(originServiceContext);
         }

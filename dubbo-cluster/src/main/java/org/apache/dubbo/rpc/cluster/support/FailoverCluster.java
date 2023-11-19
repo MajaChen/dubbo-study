@@ -24,12 +24,12 @@ import org.apache.dubbo.rpc.cluster.support.wrapper.AbstractCluster;
  * {@link FailoverClusterInvoker}
  *
  */
-public class FailoverCluster extends AbstractCluster {
+public class FailoverCluster extends AbstractCluster {// FailOver集群，调用失败则换个实例重试
 
     public final static String NAME = "failover";
 
     @Override
-    public <T> AbstractClusterInvoker<T> doJoin(Directory<T> directory) throws RpcException {
+    public <T> AbstractClusterInvoker<T> doJoin(Directory<T> directory) throws RpcException {// 所谓的doJoin并没有join其他集群，而只是返回一个FailoverClusterInvoker实例
         return new FailoverClusterInvoker<>(directory);
     }
 

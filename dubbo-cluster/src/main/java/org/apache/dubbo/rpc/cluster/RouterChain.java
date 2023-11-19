@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.config.ConfigurationUtils;
 import org.apache.dubbo.common.constants.LoggerCodeConstants;
+import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.common.logger.ErrorTypeAwareLogger;
 import org.apache.dubbo.common.logger.LoggerFactory;
 import org.apache.dubbo.rpc.Invocation;
@@ -41,7 +42,7 @@ import static org.apache.dubbo.rpc.cluster.Constants.ROUTER_KEY;
 /**
  * Router chain
  */
-public class RouterChain<T> {
+public class RouterChain<T> {// RouterChain封装了两个SingleRouterChain
     private static final ErrorTypeAwareLogger logger = LoggerFactory.getErrorTypeAwareLogger(RouterChain.class);
 
     private volatile SingleRouterChain<T> mainChain;
@@ -49,29 +50,30 @@ public class RouterChain<T> {
     private volatile SingleRouterChain<T> currentChain;
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public static <T> RouterChain<T> buildChain(Class<T> interfaceClass, URL url) {
-        SingleRouterChain<T> chain1 = buildSingleChain(interfaceClass, url);
+    public static <T> RouterChain<T> buildChain(Class<T> interfaceClass, URL url) {// 构建RouterChain
+        SingleRouterChain<T> chain1 = buildSingleChain(interfaceClass, url);// 为什么要构建两次？ - RouterChain采用了双备份机制 - 为什么要采用双备份机制？
         SingleRouterChain<T> chain2 = buildSingleChain(interfaceClass, url);
         return new RouterChain<>(new SingleRouterChain[]{chain1, chain2});
     }
 
+    @Activate
     public static <T> SingleRouterChain<T> buildSingleChain(Class<T> interfaceClass, URL url) {
         ModuleModel moduleModel = url.getOrDefaultModuleModel();
 
         List<RouterFactory> extensionFactories = moduleModel.getExtensionLoader(RouterFactory.class)
-            .getActivateExtension(url, ROUTER_KEY);
+            .getActivateExtension(url, ROUTER_KEY);// 加载RouteFactory
 
         List<Router> routers = extensionFactories.stream()
             .map(factory -> factory.getRouter(url))
             .sorted(Router::compareTo)
-            .collect(Collectors.toList());
+            .collect(Collectors.toList());// 基于RouteFactory加载routers
 
         List<StateRouter<T>> stateRouters = moduleModel
             .getExtensionLoader(StateRouterFactory.class)
             .getActivateExtension(url, ROUTER_KEY)
             .stream()
             .map(factory -> factory.getRouter(interfaceClass, url))
-            .collect(Collectors.toList());
+            .collect(Collectors.toList());// 基于同样的步骤加载StateRouters
 
 
         boolean shouldFailFast = Boolean.parseBoolean(ConfigurationUtils.getProperty(moduleModel, Constants.SHOULD_FAIL_FAST_KEY, "true"));

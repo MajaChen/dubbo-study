@@ -153,7 +153,7 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
      * @throws RpcException exception
      */
     protected Invoker<T> select(LoadBalance loadbalance, Invocation invocation,
-                                List<Invoker<T>> invokers, List<Invoker<T>> selected) throws RpcException {
+                                List<Invoker<T>> invokers, List<Invoker<T>> selected) throws RpcException {// 基于负载均衡算法选择最终要执行的invoker
 
         if (CollectionUtils.isEmpty(invokers)) {
             return null;
@@ -161,20 +161,20 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
         String methodName = invocation == null ? StringUtils.EMPTY_STRING : RpcUtils.getMethodName(invocation);
 
         boolean sticky = invokers.get(0).getUrl()
-            .getMethodParameter(methodName, CLUSTER_STICKY_KEY, DEFAULT_CLUSTER_STICKY);
+            .getMethodParameter(methodName, CLUSTER_STICKY_KEY, DEFAULT_CLUSTER_STICKY);// 是否启用粘滞连接，启用后将反复对同个provider发起调用以实现有状态连接
 
         //ignore overloaded method
         if (stickyInvoker != null && !invokers.contains(stickyInvoker)) {
-            stickyInvoker = null;
+            stickyInvoker = null;// stickyInvoker表示粘滞连接对应的invoker，如果该provider不可用了则踢掉用新的
         }
         //ignore concurrency problem
         if (sticky && stickyInvoker != null && (selected == null || !selected.contains(stickyInvoker))) {
             if (availableCheck && stickyInvoker.isAvailable()) {
-                return stickyInvoker;
+                return stickyInvoker;// 直接返回粘滞连接对应的invoker
             }
         }
 
-        Invoker<T> invoker = doSelect(loadbalance, invocation, invokers, selected);
+        Invoker<T> invoker = doSelect(loadbalance, invocation, invokers, selected);// 真正进行筛选
 
         if (sticky) {
             stickyInvoker = invoker;
@@ -184,7 +184,7 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
     }
 
     private Invoker<T> doSelect(LoadBalance loadbalance, Invocation invocation,
-                                List<Invoker<T>> invokers, List<Invoker<T>> selected) throws RpcException {
+                                List<Invoker<T>> invokers, List<Invoker<T>> selected) throws RpcException {// 选出invoker
 
         if (CollectionUtils.isEmpty(invokers)) {
             return null;
@@ -194,7 +194,7 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
             checkShouldInvalidateInvoker(tInvoker);
             return tInvoker;
         }
-        Invoker<T> invoker = loadbalance.select(invokers, getUrl(), invocation);
+        Invoker<T> invoker = loadbalance.select(invokers, getUrl(), invocation);// 利用负载均衡策略选出invoker
 
         //If the `invoker` is in the  `selected` or invoker is unavailable && availablecheck is true, reselect.
         boolean isSelected = selected != null && selected.contains(invoker);
@@ -321,7 +321,7 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
     }
 
     @Override
-    public Result invoke(final Invocation invocation) throws RpcException {
+    public Result invoke(final Invocation invocation) throws RpcException {// 发起远程调用
         checkWhetherDestroyed();
 
         // binding attachments into invocation.
@@ -331,17 +331,21 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
 //        }
 
         InvocationProfilerUtils.enterDetailProfiler(invocation, () -> "Router route.");
+        /*
+          选出最终承担执行任务的invoker，这里的invoker就是AbstractInvoker的子类了
+          对应RegistryDirectory.notify方法，并最终对应到DubboProtocol.refer方法，生成DubboInvoker实例
+          **/
         List<Invoker<T>> invokers = list(invocation);
         InvocationProfilerUtils.releaseDetailProfiler(invocation);
 
         checkInvokers(invokers, invocation);
 
-        LoadBalance loadbalance = initLoadBalance(invokers, invocation);
+        LoadBalance loadbalance = initLoadBalance(invokers, invocation);// 负载均衡
         RpcUtils.attachInvocationIdIfAsync(getUrl(), invocation);
 
         InvocationProfilerUtils.enterDetailProfiler(invocation, () -> "Cluster " + this.getClass().getName() + " invoke.");
         try {
-            return doInvoke(invocation, invokers, loadbalance);
+            return doInvoke(invocation, invokers, loadbalance);// 将实际的invoke托付给Cluster的实现类
         } finally {
             InvocationProfilerUtils.releaseDetailProfiler(invocation);
         }
@@ -373,16 +377,16 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
     }
 
     protected Result invokeWithContext(Invoker<T> invoker, Invocation invocation) {
-        Invoker<T> originInvoker = setContext(invoker);
+        Invoker<T> originInvoker = setContext(invoker);// 设置context并保存原来的invoker
         Result result;
         try {
             if (ProfilerSwitch.isEnableSimpleProfiler()) {
                 InvocationProfilerUtils.enterProfiler(invocation, "Invoker invoke. Target Address: " + invoker.getUrl().getAddress());
             }
-            setRemote(invoker, invocation);
-            result = invoker.invoke(invocation);
+            setRemote(invoker, invocation);// 设置remote
+            result = invoker.invoke(invocation);// 正式发起调用
         } finally {
-            clearContext(originInvoker);
+            clearContext(originInvoker);// 恢复context
             InvocationProfilerUtils.releaseSimpleProfiler(invocation);
         }
         return result;
@@ -420,7 +424,7 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
                                        LoadBalance loadbalance) throws RpcException;
 
     protected List<Invoker<T>> list(Invocation invocation) throws RpcException {
-        return getDirectory().list(invocation);
+        return getDirectory().list(invocation);// 根据Invocation从directory中获取invokers列表
     }
 
     /**
@@ -434,12 +438,12 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
      * @param invocation invocation
      * @return LoadBalance instance. if not need init, return null.
      */
-    protected LoadBalance initLoadBalance(List<Invoker<T>> invokers, Invocation invocation) {
+    protected LoadBalance initLoadBalance(List<Invoker<T>> invokers, Invocation invocation) {// 初始化负载均衡器
         ApplicationModel applicationModel = ScopeModelUtil.getApplicationModel(invocation.getModuleModel());
         if (CollectionUtils.isNotEmpty(invokers)) {
             return applicationModel.getExtensionLoader(LoadBalance.class).getExtension(
                 invokers.get(0).getUrl().getMethodParameter(
-                    RpcUtils.getMethodName(invocation), LOADBALANCE_KEY, DEFAULT_LOADBALANCE
+                    RpcUtils.getMethodName(invocation), LOADBALANCE_KEY, DEFAULT_LOADBALANCE// 基于第一个invoker的参数来选择负载均衡算法，默认是Random
                 )
             );
         } else {

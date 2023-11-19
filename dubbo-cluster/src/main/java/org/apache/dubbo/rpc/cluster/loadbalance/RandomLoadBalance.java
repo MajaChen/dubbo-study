@@ -53,11 +53,11 @@ public class RandomLoadBalance extends AbstractLoadBalance {
      * @return The selected invoker
      */
     @Override
-    protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
+    protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {// 从invoker列表中随机选出一个invoker
         // Number of invokers
         int length = invokers.size();
 
-        if (!needWeightLoadBalance(invokers, invocation)) {
+        if (!needWeightLoadBalance(invokers, invocation)) {// 不考虑权重
             return invokers.get(ThreadLocalRandom.current().nextInt(length));
         }
 

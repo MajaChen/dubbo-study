@@ -189,7 +189,7 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
     }
 
     @Override
-    public List<Invoker<T>> list(Invocation invocation) throws RpcException {
+    public List<Invoker<T>> list(Invocation invocation) throws RpcException {// 获取可用的invokres列表
         if (destroyed) {
             throw new RpcException("Directory of type " + this.getClass().getSimpleName() + " already destroyed for service " + getConsumerUrl().getServiceKey() + " from registry " + getUrl());
         }
@@ -209,7 +209,7 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
                 }
 
                 if (routerChain != null) {
-                    singleChain = routerChain.getSingleChain(getConsumerUrl(), availableInvokers, invocation);
+                    singleChain = routerChain.getSingleChain(getConsumerUrl(), availableInvokers, invocation);// 获取服务路由规则即SingleChain，RouterChain代表了SingleChain的集和
                     singleChain.getLock().readLock().lock();
                 }
             } finally {
@@ -218,7 +218,7 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
                 }
             }
 
-            List<Invoker<T>> routedResult = doList(singleChain, availableInvokers, invocation);
+            List<Invoker<T>> routedResult = doList(singleChain, availableInvokers, invocation);// 委托给子类进行查找
             if (routedResult.isEmpty()) {
                 // 2-2 - No provider available.
 

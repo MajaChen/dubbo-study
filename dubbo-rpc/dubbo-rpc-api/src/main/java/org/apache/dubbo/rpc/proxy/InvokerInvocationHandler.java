@@ -40,7 +40,7 @@ public class InvokerInvocationHandler implements InvocationHandler {
 
     private final String protocolServiceKey;
 
-    public InvokerInvocationHandler(Invoker<?> handler) {// 传入的invoker可能是一个ClusterInvoker对象，要追溯到RegistryProtocol.refer方法和Cluster.join方法
+    public InvokerInvocationHandler(Invoker<?> handler  ) {// 传入的invoker可能是一个ClusterInvoker对象，要追溯到RegistryProtocol.refer方法和Cluster.join方法
         this.invoker = handler;
         URL url = invoker.getUrl();
         this.protocolServiceKey = url.getProtocolServiceKey();

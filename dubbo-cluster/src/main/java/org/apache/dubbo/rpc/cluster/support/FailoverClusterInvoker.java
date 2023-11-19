@@ -58,7 +58,7 @@ public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
     public Result doInvoke(Invocation invocation, final List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {// 发起远程调用，cluster封装了directory，使多个invoker从外部视角来看就像一个invoker
         List<Invoker<T>> copyInvokers = invokers;
         String methodName = RpcUtils.getMethodName(invocation);
-        int len = calculateInvokeTimes(methodName);
+        int len = calculateInvokeTimes(methodName);// 计算重试次数，如果一个节点调用失败则换下个节点重试，体现了failover的特性
         // retry loop.
         RpcException le = null; // last exception.
         List<Invoker<T>> invoked = new ArrayList<Invoker<T>>(copyInvokers.size()); // invoked invokers.
@@ -72,12 +72,12 @@ public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
                 // check again
                 checkInvokers(copyInvokers, invocation);
             }
-            Invoker<T> invoker = select(loadbalance, invocation, copyInvokers, invoked);
+            Invoker<T> invoker = select(loadbalance, invocation, copyInvokers, invoked);// 基于负载均衡算法选择最终要执行的invoker
             invoked.add(invoker);
             RpcContext.getServiceContext().setInvokers((List) invoked);
             boolean success = false;
             try {
-                Result result = invokeWithContext(invoker, invocation);
+                Result result = invokeWithContext(invoker, invocation);// 执行invoke
                 if (le != null && logger.isWarnEnabled()) {
                     logger.warn(CLUSTER_FAILED_MULTIPLE_RETRIES,"failed to retry do invoke","","Although retry the method " + methodName
                         + " in the service " + getInterface().getName()

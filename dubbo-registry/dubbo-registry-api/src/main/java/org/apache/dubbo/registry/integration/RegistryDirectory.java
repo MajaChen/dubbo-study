@@ -176,7 +176,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
     }
 
     @Override
-    public synchronized void notify(List<URL> urls) {// 收到注册中心的通知后更新本地的invoker列表
+    public synchronized void notify(List<URL> urls) {// 收到注册中心的通知后更新本地的invoker列表，会真正创建invoker
         if (isDestroyed()) {
             return;
         }

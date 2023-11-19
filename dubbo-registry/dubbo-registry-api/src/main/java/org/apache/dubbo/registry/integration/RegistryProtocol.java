@@ -560,8 +560,8 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
             consumerAttribute
         );
         url = url.putAttribute(CONSUMER_URL_KEY, consumerUrl); // cosumerUrl:consumer://192.168.124.11/org.apache.dubbo.samples.api.GreetingsService?application=first-dubbo-consumer&background=false&dubbo=2.0.2&executor-management-mode=isolation&file-cache=true&interface=org.apache.dubbo.samples.api.GreetingsService&methods=sayHello,sayHi&pid=12364&qos.port=22222&register.ip=192.168.124.11&release=3.2.8-SNAPSHOT&side=consumer&sticky=false&timestamp=1699664658879&unloadClusterRelated=false
-        ClusterInvoker<T> migrationInvoker = getMigrationInvoker(this, cluster, registry, type, url, consumerUrl);// 返回一个ServiceDiscoveryMigrationInvoker实例，cluster是failover
-        return interceptInvoker(migrationInvoker, url, consumerUrl);// 对原有invoker进行intercept，添加集群功能，最终会调用到getInvoker方法，问题是这里已经有了migrationInvoker
+        ClusterInvoker<T> migrationInvoker = getMigrationInvoker(this, cluster, registry, type, url, consumerUrl);// 返回一个ServiceDiscoveryMigrationInvoker实例（此时只是一个空壳），cluster是failover
+        return interceptInvoker(migrationInvoker, url, consumerUrl);// 对ServiceDiscoveryMigrationInvoker实例进行intercept，添加集群功能，最终会调用到getInvoker方法创建真正的invoker
     }
 
     private String getPath(Map<String, String> parameters, Class<?> type) {
@@ -627,7 +627,7 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
         }
         directory.buildRouterChain(urlToRegistry);// 请求路由
         directory.subscribe(toSubscribeUrl(urlToRegistry));// 订阅注册中心providers,configurators,routers三类节点
-        // 上面并没有直接创建invoker，而只是创建了一个directory，真正创建invoker的动作在RegistryDirectory.notify方法里
+        // 上面并没有直接创建invoker，而只是初始化了一个RegistryDirectory（它包含多个invoker），真正创建invoker的动作在RegistryDirectory.notify方法里
         return (ClusterInvoker<T>) cluster.join(directory, true);// 利用集群功能生成invoker，这里的集群是failover集群
     }
 

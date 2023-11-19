@@ -80,9 +80,9 @@ public class SingleRouterChain<T> {
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public SingleRouterChain(List<Router> routers, List<StateRouter<T>> stateRouters, boolean shouldFailFast, RouterSnapshotSwitcher routerSnapshotSwitcher) {
-        initWithRouters(routers);
+        initWithRouters(routers);// 初始化common routers
 
-        initWithStateRouters(stateRouters);
+        initWithStateRouters(stateRouters);// 初始化state routers
 
         this.shouldFailFast = shouldFailFast;
         this.routerSnapshotSwitcher = routerSnapshotSwitcher;
@@ -132,7 +132,7 @@ public class SingleRouterChain<T> {
         return headStateRouter;
     }
 
-    public List<Invoker<T>> route(URL url, BitList<Invoker<T>> availableInvokers, Invocation invocation) {
+    public List<Invoker<T>> route(URL url, BitList<Invoker<T>> availableInvokers, Invocation invocation) {// 路由，从invoker列表中选出其子集
         if (invokers.getOriginList() != availableInvokers.getOriginList()) {
             logger.error(INTERNAL_ERROR, "", "Router's invoker size: " + invokers.getOriginList().size() +
                     " Invocation's invoker size: " + availableInvokers.getOriginList().size(),
@@ -142,7 +142,7 @@ public class SingleRouterChain<T> {
         if (RpcContext.getServiceContext().isNeedPrintRouterSnapshot()) {
             return routeAndPrint(url, availableInvokers, invocation);
         } else {
-            return simpleRoute(url, availableInvokers, invocation);
+            return simpleRoute(url, availableInvokers, invocation);// 正式进行路由
         }
     }
 
@@ -155,7 +155,7 @@ public class SingleRouterChain<T> {
     public List<Invoker<T>> simpleRoute(URL url, BitList<Invoker<T>> availableInvokers, Invocation invocation) {
         BitList<Invoker<T>> resultInvokers = availableInvokers.clone();
 
-        // 1. route state router
+        // 1. route state router - 进行状态路由
         resultInvokers = headStateRouter.route(resultInvokers, url, invocation, false, null);
         if (resultInvokers.isEmpty() && (shouldFailFast || routers.isEmpty())) {
             printRouterSnapshot(url, availableInvokers, invocation);
@@ -166,7 +166,7 @@ public class SingleRouterChain<T> {
             return resultInvokers;
         }
         List<Invoker<T>> commonRouterResult = resultInvokers.cloneToArrayList();
-        // 2. route common router
+        // 2. route common router - 普通路由
         for (Router router : routers) {
             // Copy resultInvokers to a arrayList. BitList not support
             RouterResult<Invoker<T>> routeResult = router.route(commonRouterResult, url, invocation, false);
